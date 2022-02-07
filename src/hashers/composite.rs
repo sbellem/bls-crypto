@@ -4,12 +4,12 @@
 use crate::{hashers::DirectHasher, BLSError, Hasher};
 
 use ark_crypto_primitives::crh::{bowe_hopwood, pedersen, CRH};
+use ark_std::rand::{Rng, SeedableRng};
 use ark_ec::ProjectiveCurve;
 use ark_ed_on_bw6_761::{EdwardsParameters, EdwardsProjective};
 use ark_serialize::CanonicalSerialize;
 use blake2s_simd::Params;
 use once_cell::sync::Lazy;
-use rand::{Rng, SeedableRng};
 use rand_chacha::ChaChaRng;
 
 // Fix to get around leaking a private type in a public interface

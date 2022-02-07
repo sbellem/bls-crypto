@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 
 use super::HashToCurve;
 use crate::hashers::{
-    composite::{CompositeHasher, COMPOSITE_HASHER, CRH},
+    composite::{CompositeHasher, COMPOSITE_HASHER, BHCRH},
     DirectHasher, Hasher,
 };
 use crate::BLSError;
@@ -28,7 +28,7 @@ const NUM_TRIES: u8 = 255;
 
 /// Composite (Bowe-Hopwood CRH, Blake2x XOF) Try-and-Increment hasher for BLS 12-377.
 pub static COMPOSITE_HASH_TO_G1: Lazy<
-    TryAndIncrement<CompositeHasher<CRH>, <Parameters as Bls12Parameters>::G1Parameters>,
+    TryAndIncrement<CompositeHasher<BHCRH>, <Parameters as Bls12Parameters>::G1Parameters>,
 > = Lazy::new(|| TryAndIncrement::new(&*COMPOSITE_HASHER));
 
 /// Direct (Blake2s CRH, Blake2x XOF) Try-and-Increment hasher for BLS 12-377.

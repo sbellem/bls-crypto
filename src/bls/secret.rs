@@ -4,7 +4,7 @@ use ark_bls12_377::{Fr, G1Projective};
 use ark_ec::group::Group;
 use ark_ff::UniformRand;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
-use rand::Rng;
+use ark_std::rand::{Rng};
 use std::io::{Read, Write};
 
 /// A Private Key using a pairing friendly curve's Fr point
