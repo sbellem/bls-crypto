@@ -27,11 +27,11 @@
 /// use ark_bls12_377::g1::Parameters;
 /// use bls_crypto::{
 ///     OUT_DOMAIN,
-///     hashers::composite::{CompositeHasher, CRH}, // We'll use the Composite Hasher
+///     hashers::composite::{CompositeHasher, BHCRH}, // We'll use the Composite Hasher
 ///     hash_to_curve::{HashToCurve, try_and_increment::TryAndIncrement},
 /// };
 ///
-/// let composite_hasher = CompositeHasher::<CRH>::new().unwrap();
+/// let composite_hasher = CompositeHasher::<BHCRH>::new().unwrap();
 /// let hasher = TryAndIncrement::<_, Parameters>::new(&composite_hasher);
 ///
 /// // hash the data as before
@@ -161,7 +161,7 @@ mod test {
     use super::*;
     use crate::hash_to_curve::try_and_increment::TryAndIncrement;
     use crate::hashers::{
-        composite::{CompositeHasher, CRH},
+        composite::{CompositeHasher, BHCRH},
         DirectHasher, Hasher,
     };
     use ark_bls12_377::Parameters;
@@ -186,7 +186,7 @@ mod test {
 
     #[test]
     fn hash_to_curve_composite_g1() {
-        let h = CompositeHasher::<CRH>::new().unwrap();
+        let h = CompositeHasher::<BHCRH>::new().unwrap();
         hash_to_curve_test::<<Parameters as Bls12Parameters>::G1Parameters, _>(h)
     }
 
@@ -198,7 +198,7 @@ mod test {
 
     #[test]
     fn hash_to_curve_composite_g2() {
-        let h = CompositeHasher::<CRH>::new().unwrap();
+        let h = CompositeHasher::<BHCRH>::new().unwrap();
         hash_to_curve_test::<<Parameters as Bls12Parameters>::G2Parameters, _>(h)
     }
 

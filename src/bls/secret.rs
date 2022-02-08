@@ -78,24 +78,24 @@ mod tests {
     use crate::{
         hash_to_curve::try_and_increment::TryAndIncrement,
         hashers::{
-            composite::{CompositeHasher, CRH},
+            composite::{CompositeHasher, BHCRH},
             DirectHasher, Hasher,
         },
     };
     use ark_bls12_377::Parameters;
     use ark_ec::bls12::Bls12Parameters;
-    use rand::{thread_rng, Rng};
+    use ark_std::{rand::Rng, test_rng};
 
     #[test]
     fn test_simple_sig() {
         let direct_hasher = DirectHasher;
-        let composite_hasher = CompositeHasher::<CRH>::new().unwrap();
+        let composite_hasher = CompositeHasher::<BHCRH>::new().unwrap();
         test_simple_sig_with_hasher(direct_hasher);
         test_simple_sig_with_hasher(composite_hasher);
     }
 
     fn test_simple_sig_with_hasher<X: Hasher<Error = BLSError>>(hasher: X) {
-        let rng = &mut thread_rng();
+        let rng = &mut test_rng();
         let try_and_increment =
             TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(&hasher);
         for _ in 0..10 {
@@ -117,7 +117,7 @@ mod tests {
 
     #[test]
     fn test_pop() {
-        let rng = &mut thread_rng();
+        let rng = &mut test_rng();
         let direct_hasher = DirectHasher;
         let try_and_increment =
             TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(

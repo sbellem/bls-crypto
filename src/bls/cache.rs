@@ -115,9 +115,10 @@ mod tests {
     use super::*;
     use ark_ff::UniformRand;
     use ark_serialize::CanonicalSerialize;
+    use ark_std::test_rng;
 
     fn rand_pubkey() -> PublicKey {
-        PublicKey(G2Projective::rand(&mut rand::thread_rng()))
+        PublicKey(G2Projective::rand(&mut test_rng()))
     }
 
     #[test]
