@@ -17,7 +17,7 @@ ark-crypto-primitives = { version = "0.3", features = ["parallel"] }
 rand = "0.8.4"
 byteorder = "1.4.3"
 hex = "0.4.3"
-clap = "3.0.1"
+clap = "2.34.0"
 log = "0.4.14"
 lru = "0.7.2"
 env_logger = "0.9.0"
