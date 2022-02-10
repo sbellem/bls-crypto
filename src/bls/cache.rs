@@ -165,8 +165,8 @@ mod tests {
     fn aggregation() {
         let mut cache = PublicKeyCache::new();
 
-         let mut rng = ark_std::test_rng();
-         let pubkeys = (0..10).map(|_| rand_pubkey(&mut rng)).collect::<Vec<_>>();
+        let mut rng = ark_std::test_rng();
+        let pubkeys = (0..10).map(|_| rand_pubkey(&mut rng)).collect::<Vec<_>>();
 
         let apubkey = cache.aggregate(pubkeys.clone());
         assert_eq!(apubkey, PublicKey::aggregate(&pubkeys));
