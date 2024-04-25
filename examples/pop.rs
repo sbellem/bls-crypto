@@ -2,21 +2,21 @@ use bls_crypto::{hash_to_curve::try_and_increment::DIRECT_HASH_TO_G1, PrivateKey
 
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
-use clap::{App, Arg};
+use clap::{Command, Arg};
 
 fn main() {
-    let matches = App::new("BLS Proof of Possession")
+    let matches = Command::new("BLS Proof of Possession")
         .about("Generates a proof of posession for the given private key")
         .arg(
-            Arg::with_name("key")
-                .short("k")
+            Arg::new("key")
+                .short('k')
                 .value_name("KEY")
                 .help("Sets the BLS private key")
                 .required(true),
         )
         .get_matches();
 
-    let key = matches.value_of("key").unwrap();
+    let key = matches.get_one::<String>("key").unwrap();
     let key_bytes = hex::decode(key).unwrap();
 
     let try_and_increment = &*DIRECT_HASH_TO_G1;

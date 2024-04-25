@@ -1,31 +1,31 @@
 use ark_serialize::CanonicalSerialize;
 use bls_crypto::{hash_to_curve::try_and_increment::DIRECT_HASH_TO_G1, PrivateKey};
 
-use clap::{App, Arg};
+use clap::{Command, Arg};
 use ark_std::test_rng;
 use std::{fs::File, io::Write};
 
 fn main() {
-    let matches = App::new("BLS Proof of Possession test vectors")
+    let matches = Command::new("BLS Proof of Possession test vectors")
         .about("Generates many proof of posession for random keys")
         .arg(
-            Arg::with_name("num")
-                .short("n")
+            Arg::new("num")
+                .short('n')
                 .value_name("NUM")
                 .help("Sets the number of test vectors")
                 .required(true),
         )
         .arg(
-            Arg::with_name("out")
-                .short("o")
+            Arg::new("out")
+                .short('o')
                 .value_name("OUT")
                 .help("Sets the output file path")
                 .required(true),
         )
         .get_matches();
 
-    let num: i32 = matches.value_of("num").unwrap().parse().unwrap();
-    let out = matches.value_of("out").unwrap();
+    let num: i32 = matches.get_one::<String>("num").unwrap().parse().unwrap();
+    let out = matches.get_one::<String>("out").unwrap();
 
     let try_and_increment = &*DIRECT_HASH_TO_G1;
     let rng = &mut test_rng();
