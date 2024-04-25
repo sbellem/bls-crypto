@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  bls:
+    image: bls-crypto
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./benches:/usr/src/bls-crypto/benches
+      - ./examples:/usr/src/bls-crypto/examples
+      - ./src:/usr/src/bls-crypto/src
+      - ./Cargo.lock:/usr/src/bls-crypto/Cargo.lock
+      - ./Cargo.toml:/usr/src/bls-crypto/Cargo.toml
