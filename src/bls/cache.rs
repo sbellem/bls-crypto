@@ -7,7 +7,9 @@ use lru::LruCache;
 use std::{
     collections::HashSet,
     hash::{Hash, Hasher},
+    num::NonZeroUsize,
 };
+
 
 /// Allows deserializing and aggregation of public keys while holding a cache to improve
 /// performance. Aggregation assumes that the aggregated public key changes slowly.
@@ -33,7 +35,7 @@ impl PublicKeyCache {
         Self {
             keys: HashSet::new(),
             combined: PublicKey(G2Projective::zero()),
-            de: LruCache::new(512),
+            de: LruCache::new(NonZeroUsize::new(512).unwrap()),
         }
     }
 
