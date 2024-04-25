@@ -8,8 +8,8 @@ fn main() {
     let matches = App::new("BLS Proof of Possession")
         .about("Generates a proof of posession for the given private key")
         .arg(
-            Arg::new("key")
-                .short('k')
+            Arg::with_name("key")
+                .short("k")
                 .value_name("KEY")
                 .help("Sets the BLS private key")
                 .required(true),

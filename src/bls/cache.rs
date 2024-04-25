@@ -115,7 +115,6 @@ mod tests {
     use super::*;
     use ark_ff::UniformRand;
     use ark_serialize::CanonicalSerialize;
-    use ark_std::test_rng;
     use ark_std::rand::Rng;
 
     fn rand_pubkey<R: Rng + Sized>(rng: &mut R) -> PublicKey {
