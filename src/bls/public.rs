@@ -8,6 +8,8 @@ use ark_serialize::{
     CanonicalSerialize,
     Compress,
     SerializationError,
+    Valid,
+    Validate,
 };
 
 use std::{
@@ -28,7 +30,7 @@ impl From<G2Projective> for PublicKey {
 
 impl From<&PrivateKey> for PublicKey {
     fn from(pk: &PrivateKey) -> PublicKey {
-        PublicKey::from(G2Projective::prime_subgroup_generator().mul(pk.as_ref().into_repr()))
+        PublicKey::from(G2Projective::generator().mul(pk.as_ref().into_repr()))
     }
 }
 
@@ -86,7 +88,7 @@ impl PublicKey {
         let pairing = Bls12_377::product_of_pairings(&vec![
             (
                 signature.as_ref().into_affine().into(),
-                G2Affine::prime_subgroup_generator().neg().into(),
+                G2Affine::generator().neg().into(),
             ),
             (
                 hash_to_g1
@@ -104,6 +106,14 @@ impl PublicKey {
     }
 }
 
+impl Valid for PublicKey {
+    fn check(&self) -> Result<(), SerializationError> {
+        self.0.into_affine().check()?;
+
+        Ok(())
+    }
+}
+
 impl CanonicalSerialize for PublicKey {
     fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
         self.0.into_affine().serialize(writer)
@@ -113,8 +123,16 @@ impl CanonicalSerialize for PublicKey {
         self.0.into_affine().serialize_uncompressed(writer)
     }
 
-    fn serialized_size(&self, c: Compress) -> usize {
-        self.0.into_affine().serialized_size(c)
+    fn serialized_size(&self, compress: Compress) -> usize {
+        self.0.into_affine().serialized_size(compress)
+    }
+ 
+	fn serialize_with_mode<W: Write>(
+        &self,
+        mut writer: W,
+        compress: Compress,
+    ) -> Result<(), SerializationError> {
+        self.0.into_affine().serialize_with_mode(&mut writer, compress)
     }
 }
 
@@ -130,4 +148,16 @@ impl CanonicalDeserialize for PublicKey {
             G2Affine::deserialize_uncompressed(reader)?.into_projective(),
         ))
     }
+
+    fn deserialize_with_mode<R: Read>(
+        mut reader: R,
+        compress: Compress,
+        validate: Validate,
+    ) -> Result<Self, SerializationError> {
+        Ok(PublicKey::from(
+            G2Affine::deserialize_with_mode(&mut reader, compress, Validate::No)?.into_projective(),
+        ))
+    }
+
+
 }

@@ -3,9 +3,16 @@ use crate::{BLSError, HashToCurve};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Affine, G1Projective, G2Affine};
 //use ark_ec::{AffineRepr, pairing::Pairing, CurveGroup, Group};
-use ark_ec::CurveGroup;
+use ark_ec::{CurveGroup, Group};
 use ark_ff::One;
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, SerializationError};
+use ark_serialize::{
+    CanonicalDeserialize,
+    CanonicalSerialize,
+    Compress,
+    SerializationError,
+    Valid,
+    Validate,
+};
 
 use std::{
     borrow::Borrow,
@@ -29,6 +36,14 @@ impl AsRef<G1Projective> for Signature {
     }
 }
 
+impl Valid for Signature {
+    fn check(&self) -> Result<(), SerializationError> {
+        self.0.into_affine().check()?;
+
+        Ok(())
+    }
+}
+
 impl CanonicalSerialize for Signature {
     fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
         self.0.into_affine().serialize(writer)
@@ -38,8 +53,16 @@ impl CanonicalSerialize for Signature {
         self.0.into_affine().serialize_uncompressed(writer)
     }
 
-    fn serialized_size(&self, c: Compress) -> usize {
-        self.0.into_affine().serialized_size(c)
+    fn serialized_size(&self, compress: Compress) -> usize {
+        self.0.into_affine().serialized_size(compress)
+    }
+
+	fn serialize_with_mode<W: Write>(
+        &self,
+        mut writer: W,
+        compress: Compress,
+    ) -> Result<(), SerializationError> {
+        self.0.into_affine().serialize_with_mode(&mut writer, compress)
     }
 }
 
@@ -53,6 +76,16 @@ impl CanonicalDeserialize for Signature {
     fn deserialize_uncompressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(Signature::from(
             G1Affine::deserialize_uncompressed(reader)?.into_projective(),
+        ))
+    }
+    
+    fn deserialize_with_mode<R: Read>(
+        mut reader: R,
+        compress: Compress,
+        validate: Validate,
+    ) -> Result<Self, SerializationError> {
+        Ok(Signature::from(
+            G2Affine::deserialize_with_mode(&mut reader, compress, Validate::No)?.into_projective(),
         ))
     }
 }
@@ -113,7 +146,7 @@ impl Signature {
         let mut els = Vec::with_capacity(message_hashes.len() + 1);
         els.push((
             self.as_ref().into_affine().into(),
-            G2Affine::prime_subgroup_generator().neg().into(),
+            G2Affine::generator().neg().into(),
         ));
         message_hashes
             .iter()

@@ -62,8 +62,8 @@ impl PrivateKey {
         Ok(self.sign_raw(&hash))
     }
 
-    fn sign_raw(&self, message: &G1Projective) -> Signature {
-        message.mul(self.as_ref()).into()
+    fn sign_raw(&self, message: &G2Projective) -> Signature {
+        message.mul_projective(self.as_ref()).into()
     }
 
     /// Converts the private key to a public key
