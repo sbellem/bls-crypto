@@ -2,9 +2,16 @@ use super::PublicKey;
 use crate::{BLSError, HashToCurve};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Affine, G1Projective, G2Affine};
-use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
+use ark_ec::{AffineRepr, CurveGroup, pairing::Pairing};
 use ark_ff::One;
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
+use ark_serialize::{
+    CanonicalDeserialize,
+    CanonicalSerialize,
+    Compress,
+    SerializationError,
+    Valid,
+    Validate,
+};
 
 use std::{
     borrow::Borrow,
@@ -28,30 +35,56 @@ impl AsRef<G1Projective> for Signature {
     }
 }
 
+impl Valid for Signature {
+    fn check(&self) -> Result<(), SerializationError> {
+        self.0.into_affine().check()?;
+
+        Ok(())
+    }
+}
+
 impl CanonicalSerialize for Signature {
-    fn serialize<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
-        self.0.into_affine().serialize(writer)
+    fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
+        self.0.into_affine().serialize_compressed(writer)
     }
 
     fn serialize_uncompressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
         self.0.into_affine().serialize_uncompressed(writer)
     }
 
-    fn serialized_size(&self) -> usize {
-        self.0.into_affine().serialized_size()
+    fn serialized_size(&self, compress: Compress) -> usize {
+        self.0.into_affine().serialized_size(compress)
+    }
+
+	fn serialize_with_mode<W: Write>(
+        &self,
+        mut writer: W,
+        compress: Compress,
+    ) -> Result<(), SerializationError> {
+        self.0.into_affine().serialize_with_mode(&mut writer, compress)
     }
 }
 
 impl CanonicalDeserialize for Signature {
-    fn deserialize<R: Read>(reader: R) -> Result<Self, SerializationError> {
+    fn deserialize_compressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(Signature::from(
-            G1Affine::deserialize(reader)?.into_projective(),
+            G1Affine::deserialize_compressed(reader)?.into_group(),
         ))
     }
 
     fn deserialize_uncompressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(Signature::from(
-            G1Affine::deserialize_uncompressed(reader)?.into_projective(),
+            G1Affine::deserialize_uncompressed(reader)?.into_group(),
+        ))
+    }
+
+    fn deserialize_with_mode<R: Read>(
+        mut reader: R,
+        compress: Compress,
+        validate: Validate,
+    ) -> Result<Self, SerializationError> {
+        Ok(Signature::from(
+            G1Affine::deserialize_with_mode(&mut reader, compress, validate)?.into_group(),
         ))
     }
 }
@@ -109,23 +142,22 @@ impl Signature {
             return Err(BLSError::UnevenNumKeysMessages);
         };
         // `.into()` is needed to prepared the points
-        let mut els = Vec::with_capacity(message_hashes.len() + 1);
-        els.push((
-            self.as_ref().into_affine().into(),
-            G2Affine::prime_subgroup_generator().neg().into(),
-        ));
+        //let mut els_g1: Vec<Pairing::G1Prepared> = Vec::with_capacity(message_hashes.len() + 1);
+        //let mut els_g2: Vec<Pairing::G2Prepared> = Vec::with_capacity(message_hashes.len() + 1);
+        let mut els_g1: Vec<<Bls12_377 as Pairing>::G1Prepared> = Vec::with_capacity(message_hashes.len() + 1);
+        let mut els_g2: Vec<<Bls12_377 as Pairing>::G2Prepared> = Vec::with_capacity(message_hashes.len() + 1);
+        els_g1.push(self.as_ref().into_affine().into());
+        els_g2.push(G2Affine::generator().neg().into());
         message_hashes
             .iter()
             .zip(pubkeys)
             .for_each(|(hash, pubkey)| {
-                els.push((
-                    hash.into_affine().into(),
-                    pubkey.borrow().as_ref().into_affine().into(),
-                ));
+                els_g1.push(hash.into_affine().into());
+                els_g2.push(pubkey.borrow().as_ref().into_affine().into());
             });
 
-        let pairing = Bls12_377::product_of_pairings(&els);
-        if pairing == Fq12::one() {
+        let pairing = Bls12_377::multi_pairing(els_g1, els_g2);
+        if pairing.0 == Fq12::one() {
             Ok(())
         } else {
             Err(BLSError::VerificationFailed)
@@ -148,8 +180,8 @@ mod tests {
 
     use crate::hash_to_curve::try_and_increment::DIRECT_HASH_TO_G1;
     use crate::hash_to_curve::try_and_increment_cip22::TryAndIncrementCIP22;
-    use ark_bls12_377::{Bls12_377, G1Projective, G2Projective, Parameters};
-    use ark_ec::bls12::Bls12Parameters;
+    use ark_bls12_377::{Bls12_377, G1Projective, G2Projective, Config};
+    use ark_ec::bls12::Bls12Config;
     use ark_ff::{UniformRand, Zero};
     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
     use ark_std::{rand::Rng, test_rng};
@@ -208,17 +240,17 @@ mod tests {
     #[test]
     fn test_batch_verify() {
         let try_and_increment_direct =
-            TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(&DirectHasher);
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&DirectHasher);
         test_batch_verify_with_hasher(&try_and_increment_direct, false, false);
         let try_and_increment_composite = TryAndIncrement::<
             _,
-            <Parameters as Bls12Parameters>::G1Parameters,
+            <Config as Bls12Config>::G1Config,
         >::new(&*COMPOSITE_HASHER);
         for &cip22 in &[false, true] {
             test_batch_verify_with_hasher(&try_and_increment_composite, true, cip22);
             let try_and_increment_composite_cip22 = TryAndIncrementCIP22::<
                 _,
-                <Parameters as Bls12Parameters>::G1Parameters,
+                <Config as Bls12Config>::G1Config,
             >::new(&*COMPOSITE_HASHER);
             test_batch_verify_with_hasher(&try_and_increment_composite_cip22, true, cip22);
         }
@@ -357,8 +389,8 @@ mod tests {
             let sk = PrivateKey::generate(rng);
             let sig = sk.sign(&message[..], &[], try_and_increment).unwrap();
             let mut sig_bytes = vec![];
-            sig.serialize(&mut sig_bytes).unwrap();
-            let de = Signature::deserialize(&mut &sig_bytes[..]).unwrap();
+            sig.serialize_compressed(&mut sig_bytes).unwrap();
+            let de = Signature::deserialize_compressed(&mut &sig_bytes[..]).unwrap();
             assert_eq!(sig, de);
         }
     }

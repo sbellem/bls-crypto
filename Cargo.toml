@@ -5,13 +5,14 @@ authors = ["Kobi Gurkan <kobigurk@gmail.com>", "Michael Straka <mstraka@clabs.co
 edition = "2018"
 
 [dependencies]
-ark-bls12-377 = { version = "0.3" }
-ark-serialize = { version = "0.3", features = [ "derive" ] }
-ark-ff = { version = "0.3", features = [ "std" ] }
-ark-ec = { version = "0.3", features = [ "std" ] }
-ark-std = { version = "0.3", features = [ "std" ] }
-ark-ed-on-bw6-761 = { version = "0.3" }
-ark-crypto-primitives = { version = "0.3" }
+ark-bls12-377 = { version = "0.4.0" }
+ark-serialize = { version = "0.4.0", features = [ "derive" ] }
+ark-ff = { version = "0.4.0", features = [ "std" ] }
+ark-ec = { version = "0.4.0", features = [ "std" ] }
+ark-std = { version = "0.4.0", features = [ "std" ] }
+ark-ed-on-bw6-761 = { version = "0.4.0" }
+#ark-crypto-primitives = { version = "0.4", features = [ "crh" ] }
+ark-crypto-primitives = { version = "0.4.0", features = [ "crh" ]  }
 
 # other deps
 rand = "0.8.4"

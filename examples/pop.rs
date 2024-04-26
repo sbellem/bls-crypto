@@ -20,15 +20,15 @@ fn main() {
     let key_bytes = hex::decode(key).unwrap();
 
     let try_and_increment = &*DIRECT_HASH_TO_G1;
-    let sk = PrivateKey::deserialize(&mut &key_bytes[..]).unwrap();
+    let sk = PrivateKey::deserialize_compressed(&mut &key_bytes[..]).unwrap();
     let pk = sk.to_public();
 
     let mut pk_bytes = vec![];
-    pk.serialize(&mut pk_bytes).unwrap();
+    pk.serialize_compressed(&mut pk_bytes).unwrap();
 
     let pop = sk.sign_pop(&pk_bytes, try_and_increment).unwrap();
     let mut pop_bytes = vec![];
-    pop.serialize(&mut pop_bytes).unwrap();
+    pop.serialize_compressed(&mut pop_bytes).unwrap();
 
     pk.verify_pop(&pk_bytes, &pop, try_and_increment).unwrap();
 

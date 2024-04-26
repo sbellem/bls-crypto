@@ -55,7 +55,7 @@ impl PublicKeyCache {
             Some(cached_result) => Ok(cached_result.clone()),
             // cache miss
             None => {
-                let generated_result = PublicKey::deserialize(&mut &data[..])?;
+                let generated_result = PublicKey::deserialize_compressed(&mut &data[..])?;
                 self.de.put(data, generated_result.clone());
                 Ok(generated_result)
             }
@@ -133,7 +133,7 @@ mod tests {
             .iter()
             .map(|p| {
                 let mut w = vec![];
-                p.serialize(&mut w).unwrap();
+                p.serialize_compressed(&mut w).unwrap();
                 w
             })
             .collect::<Vec<_>>();
@@ -153,7 +153,7 @@ mod tests {
         let pubkey = rand_pubkey(&mut rng);
 
         let mut serialized = vec![];
-        pubkey.serialize(&mut serialized).unwrap();
+        pubkey.serialize_compressed(&mut serialized).unwrap();
 
         assert!(cache.de.is_empty());
 

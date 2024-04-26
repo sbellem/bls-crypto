@@ -1,11 +1,10 @@
 use crate::{BLSError, HashToCurve, PublicKey, Signature, POP_DOMAIN, SIG_DOMAIN};
 
 use ark_bls12_377::{Fr, G1Projective};
-use ark_ec::group::Group;
-use ark_ff::UniformRand;
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
+use ark_ec::Group;
+use ark_ff::{PrimeField, UniformRand};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use ark_std::rand::{Rng};
-use std::io::{Read, Write};
 
 /// A Private Key using a pairing friendly curve's Fr point
 #[derive(Clone, Debug, CanonicalSerialize, CanonicalDeserialize)]
@@ -63,7 +62,7 @@ impl PrivateKey {
     }
 
     fn sign_raw(&self, message: &G1Projective) -> Signature {
-        message.mul(self.as_ref()).into()
+        message.mul_bigint(self.as_ref().into_bigint()).into()
     }
 
     /// Converts the private key to a public key
@@ -82,8 +81,8 @@ mod tests {
             DirectHasher, Hasher,
         },
     };
-    use ark_bls12_377::Parameters;
-    use ark_ec::bls12::Bls12Parameters;
+    use ark_bls12_377::Config;
+    use ark_ec::bls12::Bls12Config;
     use ark_std::{rand::Rng, test_rng};
 
     #[test]
@@ -97,7 +96,7 @@ mod tests {
     fn test_simple_sig_with_hasher<X: Hasher<Error = BLSError>>(hasher: X) {
         let rng = &mut test_rng();
         let try_and_increment =
-            TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(&hasher);
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&hasher);
         for _ in 0..10 {
             let mut message: Vec<u8> = vec![];
             for _ in 0..32 {
@@ -120,7 +119,7 @@ mod tests {
         let rng = &mut test_rng();
         let direct_hasher = DirectHasher;
         let try_and_increment =
-            TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(
                 &direct_hasher,
             );
 
@@ -129,7 +128,7 @@ mod tests {
 
         let pk = sk.to_public();
         let mut pk_bytes = vec![];
-        pk.serialize(&mut pk_bytes).unwrap();
+        pk.serialize_compressed(&mut pk_bytes).unwrap();
 
         let sig = sk.sign_pop(&pk_bytes, &try_and_increment).unwrap();
 

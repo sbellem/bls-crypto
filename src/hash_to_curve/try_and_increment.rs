@@ -10,16 +10,14 @@ use crate::hashers::{
 };
 use crate::BLSError;
 
-use ark_bls12_377::Parameters;
+use ark_bls12_377::Config;
 use ark_ec::{
-    bls12::Bls12Parameters,
-    models::{
-        short_weierstrass_jacobian::{GroupAffine, GroupProjective},
-        SWModelParameters,
-    },
+    AffineRepr,
+    bls12::Bls12Config,
+    models::short_weierstrass::{SWCurveConfig, Projective},
+    short_weierstrass::Affine,
 };
-use ark_ff::Zero;
-use ark_serialize::CanonicalSerialize;
+use ark_serialize::{Compress, CanonicalSerialize};
 
 use crate::hash_to_curve::hash_length;
 use once_cell::sync::Lazy;
@@ -28,13 +26,13 @@ const NUM_TRIES: u8 = 255;
 
 /// Composite (Bowe-Hopwood CRH, Blake2x XOF) Try-and-Increment hasher for BLS 12-377.
 pub static COMPOSITE_HASH_TO_G1: Lazy<
-    TryAndIncrement<CompositeHasher<BHCRH>, <Parameters as Bls12Parameters>::G1Parameters>,
+    TryAndIncrement<CompositeHasher<BHCRH>, <Config as Bls12Config>::G1Config>,
 > = Lazy::new(|| TryAndIncrement::new(&*COMPOSITE_HASHER));
 
 /// Direct (Blake2s CRH, Blake2x XOF) Try-and-Increment hasher for BLS 12-377.
 /// Equivalent to Blake2xs.
 pub static DIRECT_HASH_TO_G1: Lazy<
-    TryAndIncrement<DirectHasher, <Parameters as Bls12Parameters>::G1Parameters>,
+    TryAndIncrement<DirectHasher, <Config as Bls12Config>::G1Config>,
 > = Lazy::new(|| TryAndIncrement::new(&DirectHasher));
 
 /// A try-and-increment method for hashing to G1 and G2. See page 521 in
@@ -48,7 +46,7 @@ pub struct TryAndIncrement<'a, H, P> {
 impl<'a, H, P> TryAndIncrement<'a, H, P>
 where
     H: Hasher<Error = BLSError>,
-    P: SWModelParameters,
+    P: SWCurveConfig,
 {
     /// Instantiates a new Try-and-increment hasher with the provided hashing method
     /// and curve parameters based on the type
@@ -63,9 +61,9 @@ where
 impl<'a, H, P> HashToCurve for TryAndIncrement<'a, H, P>
 where
     H: Hasher<Error = BLSError>,
-    P: SWModelParameters,
+    P: SWCurveConfig,
 {
-    type Output = GroupProjective<P>;
+    type Output = Projective<P>;
 
     fn hash(
         &self,
@@ -81,7 +79,7 @@ where
 impl<'a, H, P> TryAndIncrement<'a, H, P>
 where
     H: Hasher<Error = BLSError>,
-    P: SWModelParameters,
+    P: SWCurveConfig,
 {
     /// Hash with attempt takes the input, appends a counter
     pub fn hash_with_attempt(
@@ -89,8 +87,8 @@ where
         domain: &[u8],
         message: &[u8],
         extra_data: &[u8],
-    ) -> Result<(GroupProjective<P>, usize), BLSError> {
-        let num_bytes = GroupAffine::<P>::zero().serialized_size();
+    ) -> Result<(Projective<P>, usize), BLSError> {
+        let num_bytes = Affine::<P>::identity().serialized_size(Compress::Yes);
         let hash_loop_time = start_timer!(|| "try_and_increment::hash_loop");
         let hash_bytes = hash_length(num_bytes);
 
@@ -127,14 +125,35 @@ where
                 );
                 end_timer!(hash_loop_time);
 
-                let scaled = p.scale_by_cofactor();
+                let scaled = p.mul_by_cofactor();
                 if scaled.is_zero() {
                     continue;
                 }
 
-                return Ok((scaled, c as usize));
+                return Ok((scaled.into(), c as usize));
             }
         }
         Err(BLSError::HashToCurveError)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::hashers::{
+        composite::{CompositeHasher, COMPOSITE_HASHER, BHCRH},
+    };
+    use ark_ec::bls12::Bls12Config;
+    use std::any::type_name_of_val;
+
+    #[test]
+    fn test_try_and_increment() {
+        let try_and_increment: TryAndIncrement<CompositeHasher<BHCRH>, <Config as Bls12Config>::G1Config> = TryAndIncrement::new(&*COMPOSITE_HASHER);
+        println!("{:?}", type_name_of_val(&try_and_increment));
+        //let msg: Vec<u8> = vec![];
+        //let hasher = &*COMPOSITE_HASHER;
+        //let result = hasher.crh(&[], &msg, 96).unwrap();
+        //println!("{:?}", type_name_of_val(&hasher));
+        //assert_eq!(hex::encode(result), "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
     }
 }

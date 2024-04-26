@@ -35,13 +35,13 @@ fn main() {
         let pk = sk.to_public();
         let address_bytes = hex::decode("60515f8c59451e04ab4b22b3fc9a196b2ad354e6").unwrap();
         let mut pk_bytes = vec![];
-        pk.serialize(&mut pk_bytes).unwrap();
+        pk.serialize_compressed(&mut pk_bytes).unwrap();
         let pop = sk.sign_pop(&address_bytes, try_and_increment).unwrap();
         let mut pop_bytes = vec![];
-        pop.serialize(&mut pop_bytes).unwrap();
+        pop.serialize_compressed(&mut pop_bytes).unwrap();
 
         let mut sk_bytes = vec![];
-        sk.serialize(&mut sk_bytes).unwrap();
+        sk.serialize_compressed(&mut sk_bytes).unwrap();
 
         pk.verify_pop(&address_bytes, &pop, try_and_increment)
             .unwrap();

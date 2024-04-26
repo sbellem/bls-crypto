@@ -1,9 +1,16 @@
 use crate::{BLSError, BlsResult, HashToCurve, PrivateKey, Signature, POP_DOMAIN, SIG_DOMAIN};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Projective, G2Affine, G2Projective};
-use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
+use ark_ec::{AffineRepr, CurveGroup, Group, pairing::Pairing};
 use ark_ff::{One, PrimeField};
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
+use ark_serialize::{
+    CanonicalDeserialize,
+    CanonicalSerialize,
+    Compress,
+    SerializationError,
+    Valid,
+    Validate,
+};
 
 use std::{
     borrow::Borrow,
@@ -23,7 +30,7 @@ impl From<G2Projective> for PublicKey {
 
 impl From<&PrivateKey> for PublicKey {
     fn from(pk: &PrivateKey) -> PublicKey {
-        PublicKey::from(G2Projective::prime_subgroup_generator().mul(pk.as_ref().into_repr()))
+        PublicKey::from(G2Projective::generator().mul_bigint(pk.as_ref().into_bigint()))
     }
 }
 
@@ -78,20 +85,21 @@ impl PublicKey {
         signature: &Signature,
         hash_to_g1: &H,
     ) -> BlsResult<()> {
-        let pairing = Bls12_377::product_of_pairings(&vec![
-            (
-                signature.as_ref().into_affine().into(),
-                G2Affine::prime_subgroup_generator().neg().into(),
-            ),
-            (
-                hash_to_g1
-                    .hash(domain, message, extra_data)?
-                    .into_affine()
-                    .into(),
-                self.0.into_affine().into(),
-            ),
-        ]);
-        if pairing == Fq12::one() {
+        let mut g1s: Vec<<Bls12_377 as Pairing>::G1Prepared> = Vec::with_capacity(2);
+        let mut g2s: Vec<<Bls12_377 as Pairing>::G2Prepared> = Vec::with_capacity(2);
+        g1s.push(signature.as_ref().into_affine().into());
+        g1s.push(
+            hash_to_g1
+                .hash(domain, message, extra_data)?
+                .into_affine()
+                .into(),
+        );
+        g2s.push(G2Affine::generator().neg().into());
+        g2s.push(self.0.into_affine().into());
+
+        let pairing = Bls12_377::multi_pairing(g1s, g2s);
+        //if pairing == PairingOutput(Fq12::one()) {
+        if pairing.0 == Fq12::one() {
             Ok(())
         } else {
             Err(BLSError::VerificationFailed)
@@ -99,30 +107,58 @@ impl PublicKey {
     }
 }
 
+impl Valid for PublicKey {
+    fn check(&self) -> Result<(), SerializationError> {
+        self.0.into_affine().check()?;
+
+        Ok(())
+    }
+}
+
 impl CanonicalSerialize for PublicKey {
-    fn serialize<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
-        self.0.into_affine().serialize(writer)
+    fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
+        self.0.into_affine().serialize_compressed(writer)
     }
 
     fn serialize_uncompressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
         self.0.into_affine().serialize_uncompressed(writer)
     }
 
-    fn serialized_size(&self) -> usize {
-        self.0.into_affine().serialized_size()
+    fn serialized_size(&self, compress: Compress) -> usize {
+        self.0.into_affine().serialized_size(compress)
+    }
+
+	fn serialize_with_mode<W: Write>(
+        &self,
+        mut writer: W,
+        compress: Compress,
+    ) -> Result<(), SerializationError> {
+        self.0.into_affine().serialize_with_mode(&mut writer, compress)
     }
 }
 
 impl CanonicalDeserialize for PublicKey {
-    fn deserialize<R: Read>(reader: R) -> Result<Self, SerializationError> {
+    fn deserialize_compressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(PublicKey::from(
-            G2Affine::deserialize(reader)?.into_projective(),
+            G2Affine::deserialize_compressed(reader)?.into_group(),
         ))
     }
 
     fn deserialize_uncompressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(PublicKey::from(
-            G2Affine::deserialize_uncompressed(reader)?.into_projective(),
+            G2Affine::deserialize_uncompressed(reader)?.into_group(),
         ))
     }
+
+    fn deserialize_with_mode<R: Read>(
+        mut reader: R,
+        compress: Compress,
+        validate: Validate,
+    ) -> Result<Self, SerializationError> {
+        Ok(PublicKey::from(
+            G2Affine::deserialize_with_mode(&mut reader, compress, validate)?.into_group(),
+        ))
+    }
+
+
 }
