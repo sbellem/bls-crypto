@@ -24,7 +24,7 @@
 /// Doing this manually requires importing the curves and instantiating the hashers as follows:
 ///
 /// ```rust
-/// use ark_bls12_377::g1::Parameters;
+/// use ark_bls12_377::g1::Config;
 /// use bls_crypto::{
 ///     OUT_DOMAIN,
 ///     hashers::composite::{CompositeHasher, BHCRH}, // We'll use the Composite Hasher
@@ -32,7 +32,7 @@
 /// };
 ///
 /// let composite_hasher = CompositeHasher::<BHCRH>::new().unwrap();
-/// let hasher = TryAndIncrement::<_, Parameters>::new(&composite_hasher);
+/// let hasher = TryAndIncrement::<_, Config>::new(&composite_hasher);
 ///
 /// // hash the data as before
 /// let hash = hasher.hash(OUT_DOMAIN, &b"some_data"[..], &b"extra"[..]).expect("should not fail");
@@ -44,7 +44,10 @@
 pub mod try_and_increment;
 pub mod try_and_increment_cip22;
 use crate::BLSError;
-use ark_ec::models::{short_weierstrass_jacobian::GroupAffine, SWModelParameters};
+use ark_ec::{
+    short_weierstrass::Affine,
+    models::short_weierstrass::SWCurveConfig,
+};
 use ark_ff::{Field, Zero};
 use ark_serialize::Flags;
 
@@ -143,12 +146,12 @@ impl Flags for YSignFlags {
     }
 }
 
-pub fn from_random_bytes<P: SWModelParameters>(bytes: &[u8]) -> Option<GroupAffine<P>> {
+pub fn from_random_bytes<P: SWCurveConfig>(bytes: &[u8]) -> Option<Affine<P>> {
     P::BaseField::from_random_bytes_with_flags::<YSignFlags>(bytes).and_then(|(x, flags)| {
         if x.is_zero() && flags.is_infinity() {
-            Some(GroupAffine::<P>::zero())
+            Some(Affine::<P>::zero())
         } else if let Some(y_is_positve) = flags.is_positive() {
-            GroupAffine::<P>::get_point_from_x(x, y_is_positve) // Unwrap is safe because it's not zero.
+            Affine::<P>::get_point_from_x(x, y_is_positve) // Unwrap is safe because it's not zero.
         } else {
             None
         }
@@ -164,10 +167,11 @@ mod test {
         composite::{CompositeHasher, BHCRH},
         DirectHasher, Hasher,
     };
-    use ark_bls12_377::Parameters;
+    use ark_bls12_377::Config;
     use ark_ec::{
-        bls12::Bls12Parameters, models::SWModelParameters,
-        short_weierstrass_jacobian::GroupProjective, ProjectiveCurve,
+        bls12::Bls12Config,
+        models::short_weierstrass::SWCurveConfig,
+        short_weierstrass::Projective, ProjectiveCurve,
     };
     use ark_serialize::CanonicalSerialize;
     use rand::{Rng, RngCore};
@@ -181,28 +185,28 @@ mod test {
     #[test]
     fn hash_to_curve_direct_g1() {
         let h = DirectHasher;
-        hash_to_curve_test::<<Parameters as Bls12Parameters>::G1Parameters, _>(h)
+        hash_to_curve_test::<<Config as Bls12Config>::G1Config, _>(h)
     }
 
     #[test]
     fn hash_to_curve_composite_g1() {
         let h = CompositeHasher::<BHCRH>::new().unwrap();
-        hash_to_curve_test::<<Parameters as Bls12Parameters>::G1Parameters, _>(h)
+        hash_to_curve_test::<<Config as Bls12Config>::G1Config, _>(h)
     }
 
     #[test]
     fn hash_to_curve_direct_g2() {
         let h = DirectHasher;
-        hash_to_curve_test::<<Parameters as Bls12Parameters>::G2Parameters, _>(h)
+        hash_to_curve_test::<<Config as Bls12Config>::G2Config, _>(h)
     }
 
     #[test]
     fn hash_to_curve_composite_g2() {
         let h = CompositeHasher::<BHCRH>::new().unwrap();
-        hash_to_curve_test::<<Parameters as Bls12Parameters>::G2Parameters, _>(h)
+        hash_to_curve_test::<<Config as Bls12Config>::G2Config, _>(h)
     }
 
-    fn hash_to_curve_test<P: SWModelParameters, X: Hasher<Error = BLSError>>(h: X) {
+    fn hash_to_curve_test<P: SWCurveConfig, X: Hasher<Error = BLSError>>(h: X) {
         let hasher = TryAndIncrement::<X, P>::new(&h);
         let mut rng = rand::thread_rng();
         for length in &[10, 25, 50, 100, 200, 300] {
@@ -233,7 +237,7 @@ mod test {
         (domain, msg, extra_data)
     }
 
-    pub fn test_hash_to_group<P: SWModelParameters, H: HashToCurve<Output = GroupProjective<P>>>(
+    pub fn test_hash_to_group<P: SWCurveConfig, H: HashToCurve<Output = Projective<P>>>(
         hasher: &H,
         rng: &mut impl Rng,
         expected_hashes: Vec<Vec<u8>>,
@@ -249,8 +253,8 @@ mod test {
 
     #[allow(dead_code)]
     pub fn test_hash_to_group_cip22<
-        P: SWModelParameters,
-        H: HashToCurve<Output = GroupProjective<P>>,
+        P: SWCurveConfig,
+        H: HashToCurve<Output = Projective<P>>,
     >(
         hasher: &H,
         rng: &mut impl Rng,
@@ -273,13 +277,13 @@ mod compat_tests {
     use crate::hash_to_curve::try_and_increment::TryAndIncrement;
     use crate::hash_to_curve::try_and_increment_cip22::TryAndIncrementCIP22;
     use crate::hashers::{composite::COMPOSITE_HASHER, Hasher};
-    use ark_bls12_377::Parameters;
+    use ark_bls12_377::Config;
     use ark_ec::{
-        bls12::{Bls12Parameters, G1Affine, G1Projective},
-        models::SWModelParameters,
-        ModelParameters, ProjectiveCurve,
+        bls12::{Bls12Config, G1Affine, G1},
+        models::short_weierstrass::SWCurveConfig,
+        ModelConfig, ProjectiveCurve,
     };
-    use ark_ff::{Field, FpParameters, FromBytes, PrimeField, SquareRootField, Zero};
+    use ark_ff::{Field, FpConfig, FromBytes, PrimeField, SquareRootField, Zero};
     use ark_serialize::CanonicalSerialize;
     use ark_std::{end_timer, start_timer};
     use byteorder::WriteBytesExt;
@@ -292,13 +296,13 @@ mod compat_tests {
         0x54,
     ];
 
-    pub fn get_point_from_x_g1<P: Bls12Parameters>(
-        x: <P::G1Parameters as ModelParameters>::BaseField,
+    pub fn get_point_from_x_g1<P: Bls12Config>(
+        x: <P::G1Config as ModelConfig>::BaseField,
         greatest: bool,
     ) -> Option<G1Affine<P>> {
         // Compute x^3 + ax + b
-        let x3b = <P::G1Parameters as SWModelParameters>::add_b(
-            &((x.square() * &x) + &<P::G1Parameters as SWModelParameters>::mul_by_a(&x)),
+        let x3b = <P::G1Config as SWCurveConfig>::add_b(
+            &((x.square() * &x) + &<P::G1Config as SWCurveConfig>::mul_by_a(&x)),
         );
 
         x3b.sqrt().map(|y| {
@@ -309,11 +313,11 @@ mod compat_tests {
         })
     }
 
-    fn compat_hasher<P: Bls12Parameters>(
+    fn compat_hasher<P: Bls12Config>(
         domain: &[u8],
         message: &[u8],
         extra_data: &[u8],
-    ) -> Result<(G1Projective<P>, usize), BLSError> {
+    ) -> Result<(G1<P>, usize), BLSError> {
         const NUM_TRIES: usize = 256;
         const EXPECTED_TOTAL_BITS: usize = 512;
         const LAST_BYTE_MASK: u8 = 1;
@@ -381,7 +385,7 @@ mod compat_tests {
         let mut expected_hashes = vec![];
         for _ in 0..num_expected_hashes {
             let (domain, msg, extra_data) = super::test::generate_test_data(&mut rng);
-            let expected_hash_point = compat_hasher::<Parameters>(&domain, &msg, &extra_data)
+            let expected_hash_point = compat_hasher::<Config>(&domain, &msg, &extra_data)
                 .unwrap()
                 .0;
 
@@ -401,7 +405,7 @@ mod compat_tests {
         let mut rng = XorShiftRng::from_seed(RNG_SEED);
         let expected_hashes = generate_compat_expected_hashes(1000);
 
-        let hasher = TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(
+        let hasher = TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(
             &*COMPOSITE_HASHER,
         );
         super::test::test_hash_to_group(&hasher, &mut rng, expected_hashes)
@@ -425,7 +429,7 @@ mod compat_tests {
             "b68e1db4b648801676a79ac199eaf003757bf2a96cdbb804bfefe0484afdc0cc299d50d660221d1de374e92c44291280",
         ].into_iter().map(|x| hex::decode(&x).unwrap()).collect::<Vec<_>>();
 
-        let hasher = TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(
+        let hasher = TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(
             &*COMPOSITE_HASHER,
         );
         super::test::test_hash_to_group(&hasher, &mut rng, expected_hashes)
@@ -448,7 +452,7 @@ mod compat_tests {
             "acbb3071d0899488ba69ce1592f49c20dada7598690f8393cca80d4abeca0dc6dec112c70228328d68f8f34d3795d100",
         ].into_iter().map(|x| hex::decode(&x).unwrap()).collect::<Vec<_>>();
 
-        let hasher = TryAndIncrementCIP22::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(
+        let hasher = TryAndIncrementCIP22::<_, <Config as Bls12Config>::G1Config>::new(
             &*COMPOSITE_HASHER,
         );
         super::test::test_hash_to_group_cip22(&hasher, &mut rng, expected_hashes)
@@ -460,8 +464,8 @@ mod non_compat_tests {
     use crate::hash_to_curve::try_and_increment::TryAndIncrement;
     use crate::hash_to_curve::try_and_increment::COMPOSITE_HASH_TO_G1;
     use crate::hashers::composite::COMPOSITE_HASHER;
-    use ark_bls12_377::Parameters;
-    use ark_ec::models::bls12::Bls12Parameters;
+    use ark_bls12_377::Config;
+    use ark_ec::models::bls12::Bls12Config;
     use rand::SeedableRng;
     use rand_xorshift::XorShiftRng;
 
@@ -506,7 +510,7 @@ mod non_compat_tests {
             "8de37ce0a7105c14880d9201f2ac1c724e031904f9c88614fa414ad57f00c89e596fadb4f5151c84f4ea04d576931c008fc43faec79d0e300d2192a8e376b25f920f14f467f050e4f2869012fce196e9af5f2041889031e2bbe81c6b3d344480",
             "10341299c41179084a0bfee8b65bac0f48af827daad4f01d3e9925a3b0335736c5d13f44765fecec45941781da5a1000d0bb26a4faa4dc8060b0b2dd0cb6acce7dd10bd081dac7f263b97aec89d6434a55b31a65b3e25f59c40ea92887b03180",
         ].into_iter().map(|x| hex::decode(&x).unwrap()).collect::<Vec<_>>();
-        let hasher_g2 = TryAndIncrement::<_, <Parameters as Bls12Parameters>::G2Parameters>::new(
+        let hasher_g2 = TryAndIncrement::<_, <Config as Bls12Config>::G2Config>::new(
             &*COMPOSITE_HASHER,
         );
         super::test::test_hash_to_group(&hasher_g2, &mut rng, expected_hashes)

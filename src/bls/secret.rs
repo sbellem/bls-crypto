@@ -1,11 +1,11 @@
 use crate::{BLSError, HashToCurve, PublicKey, Signature, POP_DOMAIN, SIG_DOMAIN};
 
 use ark_bls12_377::{Fr, G1Projective};
-use ark_ec::group::Group;
+//use ark_ec::group::Group;
 use ark_ff::UniformRand;
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use ark_std::rand::{Rng};
-use std::io::{Read, Write};
+//use std::io::{Read, Write};
 
 /// A Private Key using a pairing friendly curve's Fr point
 #[derive(Clone, Debug, CanonicalSerialize, CanonicalDeserialize)]

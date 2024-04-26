@@ -10,13 +10,11 @@ use crate::hashers::{
 };
 use crate::BLSError;
 
-use ark_bls12_377::Parameters;
+use ark_bls12_377::Config;
 use ark_ec::{
-    bls12::Bls12Parameters,
-    models::{
-        short_weierstrass_jacobian::{GroupAffine, GroupProjective},
-        SWModelParameters,
-    },
+    bls12::Bls12Config,
+    models::short_weierstrass::SWCurveConfig,
+    short_weierstrass::{Affine, Projective},
 };
 use ark_ff::Zero;
 use ark_serialize::CanonicalSerialize;
@@ -28,7 +26,7 @@ const NUM_TRIES: u8 = 255;
 
 /// Composite (Bowe-Hopwood CRH, Blake2x XOF) Try-and-Increment hasher for BLS 12-377.
 pub static COMPOSITE_HASH_TO_G1_CIP22: Lazy<
-    TryAndIncrementCIP22<CompositeHasher<BHCRH>, <Parameters as Bls12Parameters>::G1Parameters>,
+    TryAndIncrementCIP22<CompositeHasher<BHCRH>, <Config as Bls12Config>::G1Config>,
 > = Lazy::new(|| TryAndIncrementCIP22::new(&*COMPOSITE_HASHER));
 
 /// A try-and-increment method for hashing to G1 and G2. See page 521 in
@@ -42,7 +40,7 @@ pub struct TryAndIncrementCIP22<'a, H, P> {
 impl<'a, H, P> TryAndIncrementCIP22<'a, H, P>
 where
     H: Hasher<Error = BLSError>,
-    P: SWModelParameters,
+    P: SWCurveConfig,
 {
     /// Instantiates a new Try-and-increment hasher with the provided hashing method
     /// and curve parameters based on the type
@@ -57,9 +55,9 @@ where
 impl<'a, H, P> HashToCurve for TryAndIncrementCIP22<'a, H, P>
 where
     H: Hasher<Error = BLSError>,
-    P: SWModelParameters,
+    P: SWCurveConfig,
 {
-    type Output = GroupProjective<P>;
+    type Output = Projective<P>;
 
     fn hash(
         &self,
@@ -75,7 +73,7 @@ where
 impl<'a, H, P> TryAndIncrementCIP22<'a, H, P>
 where
     H: Hasher<Error = BLSError>,
-    P: SWModelParameters,
+    P: SWCurveConfig,
 {
     /// Hash with attempt takes the input, appends a counter
     pub fn hash_with_attempt_cip22(
@@ -83,8 +81,8 @@ where
         domain: &[u8],
         message: &[u8],
         extra_data: &[u8],
-    ) -> Result<(GroupProjective<P>, usize), BLSError> {
-        let num_bytes = GroupAffine::<P>::zero().serialized_size();
+    ) -> Result<(Projective<P>, usize), BLSError> {
+        let num_bytes = Affine::<P>::zero().serialized_size();
         let hash_loop_time = start_timer!(|| "try_and_increment::hash_loop");
         let hash_bytes = hash_length(num_bytes);
         let inner_hash = self.hasher.crh(domain, &message, hash_bytes)?;

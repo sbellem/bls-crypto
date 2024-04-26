@@ -1,7 +1,7 @@
 use super::PublicKey;
 use ark_bls12_377::G2Projective;
 use ark_ff::Zero;
-use ark_serialize::{CanonicalDeserialize, SerializationError};
+use ark_serialize::{SerializationError};
 
 use lru::LruCache;
 use std::{

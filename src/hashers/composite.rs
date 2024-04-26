@@ -1,13 +1,13 @@
-//! Utilities for hashing using a fixed-length CRH. Consider using the re-exported
+//! Utilities for hashing using a fixed-length CRHScheme. Consider using the re-exported
 //! COMPOSITE_HASHER which is already instantiated with the Bowe Hopwood Pedersen CRH and
 //! Blake2x as the XOF
 use crate::{hashers::DirectHasher, BLSError, Hasher};
 
-use ark_crypto_primitives::crh::{bowe_hopwood, pedersen, CRH};
+use ark_crypto_primitives::crh::{bowe_hopwood, pedersen, CRHScheme};
 use ark_std::rand::{Rng, SeedableRng};
-use ark_ec::ProjectiveCurve;
-use ark_ed_on_bw6_761::{EdwardsParameters, EdwardsProjective};
-use ark_serialize::CanonicalSerialize;
+//use ark_ec::CurveGroup;
+use ark_ed_on_bw6_761::{EdwardsConfig, EdwardsProjective};
+//use ark_serialize::CanonicalSerialize;
 use blake2s_simd::Params;
 use once_cell::sync::Lazy;
 use rand_chacha::ChaChaRng;
@@ -29,7 +29,7 @@ mod window {
 /// Bowe Hopwood Pedersen CRH instantiated over Edwards BW6_761 with `WINDOW_SIZE = 93` and
 /// `NUM_WINDOWS = 560`
 #[allow(clippy::upper_case_acronyms)]
-pub type BHCRH = bowe_hopwood::CRH<EdwardsParameters, window::Window>;
+pub type BHCRH = bowe_hopwood::CRH<EdwardsConfig, window::Window>;
 
 /// Lazily evaluated composite hasher instantiated over the
 /// Bowe-Hopwood-Pedersen CRH.
@@ -39,11 +39,11 @@ pub static COMPOSITE_HASHER: Lazy<CompositeHasher<BHCRH>> =
 /// Uses the Bowe-Hopwood-Pedersen hash (instantiated with a prng) as a CRH and Blake2x as the XOF.
 /// The CRH does _not_ use the domain or the output bytes.
 #[derive(Clone, Debug)]
-pub struct CompositeHasher<H: CRH> {
+pub struct CompositeHasher<H: CRHScheme> {
     parameters: H::Parameters,
 }
 
-impl<H: CRH> CompositeHasher<H> {
+impl<H: CRHScheme> CompositeHasher<H> {
     /// Initializes the CRH and returns a new hasher
     pub fn new() -> Result<CompositeHasher<H>, BLSError> {
         Ok(CompositeHasher {
@@ -72,7 +72,7 @@ impl<H: CRH> CompositeHasher<H> {
     }
 }
 
-impl<H: CRH<Output = EdwardsProjective>> Hasher for CompositeHasher<H> {
+impl<H: CRHScheme<Output = EdwardsProjective>> Hasher for CompositeHasher<H> {
     type Error = BLSError;
 
     // TODO: Should we improve the trait design somehow? Seems like there's a bad abstraction

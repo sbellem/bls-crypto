@@ -2,9 +2,10 @@ use super::PublicKey;
 use crate::{BLSError, HashToCurve};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Affine, G1Projective, G2Affine};
-use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
+//use ark_ec::{AffineRepr, pairing::Pairing, CurveGroup, Group};
+use ark_ec::CurveGroup;
 use ark_ff::One;
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, SerializationError};
 
 use std::{
     borrow::Borrow,
@@ -29,7 +30,7 @@ impl AsRef<G1Projective> for Signature {
 }
 
 impl CanonicalSerialize for Signature {
-    fn serialize<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
+    fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
         self.0.into_affine().serialize(writer)
     }
 
@@ -37,13 +38,13 @@ impl CanonicalSerialize for Signature {
         self.0.into_affine().serialize_uncompressed(writer)
     }
 
-    fn serialized_size(&self) -> usize {
-        self.0.into_affine().serialized_size()
+    fn serialized_size(&self, c: Compress) -> usize {
+        self.0.into_affine().serialized_size(c)
     }
 }
 
 impl CanonicalDeserialize for Signature {
-    fn deserialize<R: Read>(reader: R) -> Result<Self, SerializationError> {
+    fn deserialize_compressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(Signature::from(
             G1Affine::deserialize(reader)?.into_projective(),
         ))

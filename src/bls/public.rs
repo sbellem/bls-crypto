@@ -1,9 +1,14 @@
 use crate::{BLSError, BlsResult, HashToCurve, PrivateKey, Signature, POP_DOMAIN, SIG_DOMAIN};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Projective, G2Affine, G2Projective};
-use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
-use ark_ff::{One, PrimeField};
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
+use ark_ec::CurveGroup;
+use ark_ff::One;
+use ark_serialize::{
+    CanonicalDeserialize,
+    CanonicalSerialize,
+    Compress,
+    SerializationError,
+};
 
 use std::{
     borrow::Borrow,
@@ -100,7 +105,7 @@ impl PublicKey {
 }
 
 impl CanonicalSerialize for PublicKey {
-    fn serialize<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
+    fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
         self.0.into_affine().serialize(writer)
     }
 
@@ -108,13 +113,13 @@ impl CanonicalSerialize for PublicKey {
         self.0.into_affine().serialize_uncompressed(writer)
     }
 
-    fn serialized_size(&self) -> usize {
-        self.0.into_affine().serialized_size()
+    fn serialized_size(&self, c: Compress) -> usize {
+        self.0.into_affine().serialized_size(c)
     }
 }
 
 impl CanonicalDeserialize for PublicKey {
-    fn deserialize<R: Read>(reader: R) -> Result<Self, SerializationError> {
+    fn deserialize_compressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(PublicKey::from(
             G2Affine::deserialize(reader)?.into_projective(),
         ))
