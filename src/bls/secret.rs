@@ -62,7 +62,7 @@ impl PrivateKey {
         Ok(self.sign_raw(&hash))
     }
 
-    fn sign_raw(&self, message: &G2Projective) -> Signature {
+    fn sign_raw(&self, message: &G1Projective) -> Signature {
         message.mul_projective(self.as_ref()).into()
     }
 
@@ -82,8 +82,8 @@ mod tests {
             DirectHasher, Hasher,
         },
     };
-    use ark_bls12_377::Parameters;
-    use ark_ec::bls12::Bls12Parameters;
+    use ark_bls12_377::Config;
+    use ark_ec::bls12::Bls12Config;
     use ark_std::{rand::Rng, test_rng};
 
     #[test]
@@ -97,7 +97,7 @@ mod tests {
     fn test_simple_sig_with_hasher<X: Hasher<Error = BLSError>>(hasher: X) {
         let rng = &mut test_rng();
         let try_and_increment =
-            TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(&hasher);
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&hasher);
         for _ in 0..10 {
             let mut message: Vec<u8> = vec![];
             for _ in 0..32 {
@@ -120,7 +120,7 @@ mod tests {
         let rng = &mut test_rng();
         let direct_hasher = DirectHasher;
         let try_and_increment =
-            TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(
                 &direct_hasher,
             );
 

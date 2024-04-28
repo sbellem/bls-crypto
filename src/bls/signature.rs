@@ -2,8 +2,8 @@ use super::PublicKey;
 use crate::{BLSError, HashToCurve};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Affine, G1Projective, G2Affine};
-//use ark_ec::{AffineRepr, pairing::Pairing, CurveGroup, Group};
-use ark_ec::{CurveGroup, Group};
+//use ark_ec::{AffineRepr, CurveGroup};
+use ark_ec::{AffineRepr, CurveGroup, Group, pairing::Pairing};
 use ark_ff::One;
 use ark_serialize::{
     CanonicalDeserialize,
@@ -46,7 +46,7 @@ impl Valid for Signature {
 
 impl CanonicalSerialize for Signature {
     fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
-        self.0.into_affine().serialize(writer)
+        self.0.into_affine().serialize_compressed(writer)
     }
 
     fn serialize_uncompressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
@@ -69,23 +69,24 @@ impl CanonicalSerialize for Signature {
 impl CanonicalDeserialize for Signature {
     fn deserialize_compressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(Signature::from(
-            G1Affine::deserialize(reader)?.into_projective(),
+            G1Affine::deserialize_compressed(reader)?.into_group(),
         ))
     }
 
     fn deserialize_uncompressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(Signature::from(
-            G1Affine::deserialize_uncompressed(reader)?.into_projective(),
+            G1Affine::deserialize_uncompressed(reader)?.into_group(),
         ))
     }
-    
+
     fn deserialize_with_mode<R: Read>(
         mut reader: R,
         compress: Compress,
         validate: Validate,
     ) -> Result<Self, SerializationError> {
         Ok(Signature::from(
-            G2Affine::deserialize_with_mode(&mut reader, compress, Validate::No)?.into_projective(),
+            //G2Affine::deserialize_with_mode(&mut reader, compress, Validate::No)?.into_group(),
+            G1Affine::deserialize_with_mode(&mut reader, compress, Validate::No)?.into_group(),
         ))
     }
 }
@@ -158,7 +159,7 @@ impl Signature {
                 ));
             });
 
-        let pairing = Bls12_377::product_of_pairings(&els);
+        let pairing = Bls12_377::multi_pairing(&els);
         if pairing == Fq12::one() {
             Ok(())
         } else {
@@ -182,8 +183,8 @@ mod tests {
 
     use crate::hash_to_curve::try_and_increment::DIRECT_HASH_TO_G1;
     use crate::hash_to_curve::try_and_increment_cip22::TryAndIncrementCIP22;
-    use ark_bls12_377::{Bls12_377, G1Projective, G2Projective, Parameters};
-    use ark_ec::bls12::Bls12Parameters;
+    use ark_bls12_377::{Bls12_377, G1Projective, G2Projective, Config};
+    use ark_ec::bls12::Bls12Config;
     use ark_ff::{UniformRand, Zero};
     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
     use ark_std::{rand::Rng, test_rng};
@@ -242,17 +243,17 @@ mod tests {
     #[test]
     fn test_batch_verify() {
         let try_and_increment_direct =
-            TryAndIncrement::<_, <Parameters as Bls12Parameters>::G1Parameters>::new(&DirectHasher);
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&DirectHasher);
         test_batch_verify_with_hasher(&try_and_increment_direct, false, false);
         let try_and_increment_composite = TryAndIncrement::<
             _,
-            <Parameters as Bls12Parameters>::G1Parameters,
+            <Config as Bls12Config>::G1Config,
         >::new(&*COMPOSITE_HASHER);
         for &cip22 in &[false, true] {
             test_batch_verify_with_hasher(&try_and_increment_composite, true, cip22);
             let try_and_increment_composite_cip22 = TryAndIncrementCIP22::<
                 _,
-                <Parameters as Bls12Parameters>::G1Parameters,
+                <Config as Bls12Config>::G1Config,
             >::new(&*COMPOSITE_HASHER);
             test_batch_verify_with_hasher(&try_and_increment_composite_cip22, true, cip22);
         }

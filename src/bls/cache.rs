@@ -1,7 +1,7 @@
 use super::PublicKey;
 use ark_bls12_377::G2Projective;
 use ark_ff::Zero;
-use ark_serialize::{SerializationError};
+use ark_serialize::{CanonicalDeserialize, SerializationError};
 
 use lru::LruCache;
 use std::{
@@ -55,7 +55,7 @@ impl PublicKeyCache {
             Some(cached_result) => Ok(cached_result.clone()),
             // cache miss
             None => {
-                let generated_result = PublicKey::deserialize(&mut &data[..])?;
+                let generated_result = PublicKey::deserialize_compressed(&mut &data[..])?;
                 self.de.put(data, generated_result.clone());
                 Ok(generated_result)
             }

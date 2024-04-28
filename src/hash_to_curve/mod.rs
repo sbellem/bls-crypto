@@ -149,7 +149,7 @@ impl Flags for YSignFlags {
 pub fn from_random_bytes<P: SWCurveConfig>(bytes: &[u8]) -> Option<Affine<P>> {
     P::BaseField::from_random_bytes_with_flags::<YSignFlags>(bytes).and_then(|(x, flags)| {
         if x.is_zero() && flags.is_infinity() {
-            Some(Affine::<P>::zero())
+            Some(Affine::<P>::identity())
         } else if let Some(y_is_positve) = flags.is_positive() {
             Affine::<P>::get_point_from_x(x, y_is_positve) // Unwrap is safe because it's not zero.
         } else {
@@ -171,7 +171,8 @@ mod test {
     use ark_ec::{
         bls12::Bls12Config,
         models::short_weierstrass::SWCurveConfig,
-        short_weierstrass::Projective, ProjectiveCurve,
+        //short_weierstrass::Projective, ProjectiveCurve,
+        short_weierstrass::Projective, CurveGroup,
     };
     use ark_serialize::CanonicalSerialize;
     use rand::{Rng, RngCore};
@@ -279,11 +280,11 @@ mod compat_tests {
     use crate::hashers::{composite::COMPOSITE_HASHER, Hasher};
     use ark_bls12_377::Config;
     use ark_ec::{
-        bls12::{Bls12Config, G1Affine, G1},
+        bls12::{Bls12Config, G1Affine, G1Projective},
         models::short_weierstrass::SWCurveConfig,
-        ModelConfig, ProjectiveCurve,
+        CurveConfig, CurveGroup,
     };
-    use ark_ff::{Field, FpConfig, FromBytes, PrimeField, SquareRootField, Zero};
+    use ark_ff::{Field, FpConfig, PrimeField, Zero};
     use ark_serialize::CanonicalSerialize;
     use ark_std::{end_timer, start_timer};
     use byteorder::WriteBytesExt;
@@ -297,7 +298,7 @@ mod compat_tests {
     ];
 
     pub fn get_point_from_x_g1<P: Bls12Config>(
-        x: <P::G1Config as ModelConfig>::BaseField,
+        x: <P::G1Config as CurveConfig>::BaseField,
         greatest: bool,
     ) -> Option<G1Affine<P>> {
         // Compute x^3 + ax + b
@@ -317,7 +318,7 @@ mod compat_tests {
         domain: &[u8],
         message: &[u8],
         extra_data: &[u8],
-    ) -> Result<(G1<P>, usize), BLSError> {
+    ) -> Result<(G1Projective<P>, usize), BLSError> {
         const NUM_TRIES: usize = 256;
         const EXPECTED_TOTAL_BITS: usize = 512;
         const LAST_BYTE_MASK: u8 = 1;
@@ -326,13 +327,15 @@ mod compat_tests {
         let hasher = &*COMPOSITE_HASHER;
 
         let fp_bits =
-            (((<P::Fp as PrimeField>::Params::MODULUS_BITS as f64) / 8.0).ceil() as usize) * 8;
+            //(((<P::Fp as PrimeField>::MODULUS_BITS as f64) / 8.0).ceil() as usize) * 8;
+            (((P::Fp::MODULUS_BIT_SIZE as f64) / 8.0).ceil() as usize) * 8;
         let num_bits = fp_bits;
         let num_bytes = num_bits / 8;
 
         //round up to a multiple of 8
         let hash_fp_bits =
-            (((<P::Fp as PrimeField>::Params::MODULUS_BITS as f64) / 256.0).ceil() as usize) * 256;
+            //(((<P::Fp as PrimeField>::Config::MODULUS_BITS as f64) / 256.0).ceil() as usize) * 256;
+            (((P::Fp::MODULUS_BIT_SIZE as f64) / 256.0).ceil() as usize) * 256;
         let hash_num_bits = hash_fp_bits;
         assert_eq!(hash_num_bits, EXPECTED_TOTAL_BITS);
         let hash_num_bytes = hash_num_bits / 8;
@@ -369,7 +372,7 @@ mod compat_tests {
                     );
                     end_timer!(hash_loop_time);
                     let scaled = x.scale_by_cofactor();
-                    if scaled.is_zero() {
+                    if scaled.is_identity() {
                         continue;
                     }
                     return Ok((scaled, c));

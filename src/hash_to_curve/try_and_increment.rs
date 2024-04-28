@@ -11,13 +11,14 @@ use crate::hashers::{
 use crate::BLSError;
 
 use ark_bls12_377::Config;
+use ark_ed_on_bw6_761::{EdwardsConfig, EdwardsProjective};
 use ark_ec::{
     bls12::Bls12Config,
     models::short_weierstrass::SWCurveConfig,
     short_weierstrass::{Affine, Projective},
 };
 use ark_ff::Zero;
-use ark_serialize::CanonicalSerialize;
+use ark_serialize::{Compress, CanonicalSerialize};
 
 use crate::hash_to_curve::hash_length;
 use once_cell::sync::Lazy;
@@ -32,6 +33,7 @@ pub static COMPOSITE_HASH_TO_G1: Lazy<
 /// Direct (Blake2s CRH, Blake2x XOF) Try-and-Increment hasher for BLS 12-377.
 /// Equivalent to Blake2xs.
 pub static DIRECT_HASH_TO_G1: Lazy<
+    //TryAndIncrement<DirectHasher, <Config as Bls12Config>::G1Config>,
     TryAndIncrement<DirectHasher, <Config as Bls12Config>::G1Config>,
 > = Lazy::new(|| TryAndIncrement::new(&DirectHasher));
 
@@ -88,7 +90,7 @@ where
         message: &[u8],
         extra_data: &[u8],
     ) -> Result<(Projective<P>, usize), BLSError> {
-        let num_bytes = Affine::<P>::zero().serialized_size();
+        let num_bytes = Affine::<P>::identity().serialized_size(Compress::Yes);
         let hash_loop_time = start_timer!(|| "try_and_increment::hash_loop");
         let hash_bytes = hash_length(num_bytes);
 
@@ -126,7 +128,7 @@ where
                 end_timer!(hash_loop_time);
 
                 let scaled = p.scale_by_cofactor();
-                if scaled.is_zero() {
+                if scaled.is_identity() {
                     continue;
                 }
 

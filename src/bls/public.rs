@@ -1,7 +1,7 @@
 use crate::{BLSError, BlsResult, HashToCurve, PrivateKey, Signature, POP_DOMAIN, SIG_DOMAIN};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Projective, G2Affine, G2Projective};
-use ark_ec::CurveGroup;
+use ark_ec::{AffineRepr, CurveGroup, Group, pairing::Pairing};
 use ark_ff::One;
 use ark_serialize::{
     CanonicalDeserialize,
@@ -85,7 +85,7 @@ impl PublicKey {
         signature: &Signature,
         hash_to_g1: &H,
     ) -> BlsResult<()> {
-        let pairing = Bls12_377::product_of_pairings(&vec![
+        let pairing = Bls12_377::multi_pairing(&vec![
             (
                 signature.as_ref().into_affine().into(),
                 G2Affine::generator().neg().into(),
@@ -116,7 +116,7 @@ impl Valid for PublicKey {
 
 impl CanonicalSerialize for PublicKey {
     fn serialize_compressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
-        self.0.into_affine().serialize(writer)
+        self.0.into_affine().serialize_compressed(writer)
     }
 
     fn serialize_uncompressed<W: Write>(&self, writer: W) -> Result<(), SerializationError> {
@@ -139,13 +139,13 @@ impl CanonicalSerialize for PublicKey {
 impl CanonicalDeserialize for PublicKey {
     fn deserialize_compressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(PublicKey::from(
-            G2Affine::deserialize(reader)?.into_projective(),
+            G2Affine::deserialize_compressed(reader)?.into_group(),
         ))
     }
 
     fn deserialize_uncompressed<R: Read>(reader: R) -> Result<Self, SerializationError> {
         Ok(PublicKey::from(
-            G2Affine::deserialize_uncompressed(reader)?.into_projective(),
+            G2Affine::deserialize_uncompressed(reader)?.into_group(),
         ))
     }
 
@@ -155,7 +155,7 @@ impl CanonicalDeserialize for PublicKey {
         validate: Validate,
     ) -> Result<Self, SerializationError> {
         Ok(PublicKey::from(
-            G2Affine::deserialize_with_mode(&mut reader, compress, Validate::No)?.into_projective(),
+            G2Affine::deserialize_with_mode(&mut reader, compress, Validate::No)?.into_group(),
         ))
     }
 
