@@ -85,19 +85,19 @@ impl PublicKey {
         signature: &Signature,
         hash_to_g1: &H,
     ) -> BlsResult<()> {
-        let pairing = Bls12_377::multi_pairing(&vec![
-            (
+        let pairing = Bls12_377::multi_pairing(
+            &[
                 signature.as_ref().into_affine().into(),
                 G2Affine::generator().neg().into(),
-            ),
-            (
+            ],
+            &[
                 hash_to_g1
                     .hash(domain, message, extra_data)?
                     .into_affine()
                     .into(),
                 self.0.into_affine().into(),
-            ),
-        ]);
+            ],
+        );
         if pairing == Fq12::one() {
             Ok(())
         } else {

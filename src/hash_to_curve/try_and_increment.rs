@@ -13,6 +13,7 @@ use crate::BLSError;
 use ark_bls12_377::Config;
 use ark_ed_on_bw6_761::{EdwardsConfig, EdwardsProjective};
 use ark_ec::{
+    AffineRepr,
     bls12::Bls12Config,
     models::short_weierstrass::SWCurveConfig,
     short_weierstrass::{Affine, Projective},
@@ -127,7 +128,7 @@ where
                 );
                 end_timer!(hash_loop_time);
 
-                let scaled = p.scale_by_cofactor();
+                let scaled = p.mul_by_cofactor();
                 if scaled.is_identity() {
                     continue;
                 }

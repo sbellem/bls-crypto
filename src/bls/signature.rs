@@ -144,22 +144,19 @@ impl Signature {
             return Err(BLSError::UnevenNumKeysMessages);
         };
         // `.into()` is needed to prepared the points
-        let mut els = Vec::with_capacity(message_hashes.len() + 1);
-        els.push((
-            self.as_ref().into_affine().into(),
-            G2Affine::generator().neg().into(),
-        ));
+        let mut els_g1 = Vec::with_capacity(message_hashes.len() + 1);
+        let mut els_g2 = Vec::with_capacity(message_hashes.len() + 1);
+        els_g1.push(self.as_ref().into_affine().into());
+        els_g2.push(G2Affine::generator().neg().into());
         message_hashes
             .iter()
             .zip(pubkeys)
             .for_each(|(hash, pubkey)| {
-                els.push((
-                    hash.into_affine().into(),
-                    pubkey.borrow().as_ref().into_affine().into(),
-                ));
+                els_g1.push(hash.into_affine().into());
+                els_g2.push(pubkey.borrow().as_ref().into_affine().into());
             });
 
-        let pairing = Bls12_377::multi_pairing(&els);
+        let pairing = Bls12_377::multi_pairing(&els_g1, &els_g2);
         if pairing == Fq12::one() {
             Ok(())
         } else {
