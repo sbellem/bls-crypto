@@ -1,0 +1,21 @@
+[submodule "algebra"]
+	path = arkworks-rs/algebra
+	url = https://github.com/arkworks-rs/algebra.git
+[submodule "curves"]
+	path = arkworks-rs/curves
+	url = https://github.com/arkworks-rs/curves.git
+[submodule "r1cs-std"]
+	path = arkworks-rs/r1cs-std
+	url = https://github.com/arkworks-rs/r1cs-std.git
+[submodule "crypto-primitives"]
+	path = arkworks-rs/crypto-primitives
+	url = https://github.com/arkworks-rs/crypto-primitives.git
+[submodule "std"]
+	path = arkworks-rs/std
+	url = https://github.com/arkworks-rs/std.git
+[submodule "snark"]
+	path = arkworks-rs/snark
+	url = https://github.com/arkworks-rs/snark.git
+[submodule "nonnative"]
+	path = arkworks-rs/nonnative
+	url = https://github.com/arkworks-rs/nonnative.git
