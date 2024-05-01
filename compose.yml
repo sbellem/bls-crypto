@@ -2,7 +2,7 @@ version: '3'
 
 services:
   bls:
-    image: bls-crypto
+    image: bls-crypto:0.3.0
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,3 +12,4 @@ services:
       - ./src:/usr/src/bls-crypto/src
       - ./Cargo.lock:/usr/src/bls-crypto/Cargo.lock
       - ./Cargo.toml:/usr/src/bls-crypto/Cargo.toml
+      - ./arkworks-rs:/usr/src/bls-crypto/arkworks-rs

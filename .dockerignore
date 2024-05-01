@@ -4,5 +4,6 @@
 compose.yml
 Dockerfile
 README.md
+target
 *~
 .*.swp
