@@ -4,16 +4,59 @@ version = "0.3.0"
 authors = ["Kobi Gurkan <kobigurk@gmail.com>", "Michael Straka <mstraka@clabs.co>", "Georgios Konstantopoulos <me@gakonst.com>", "Lucas Ege <lucas@clabs.co>", "Victor Graf <victor@clabs.co>"]
 edition = "2018"
 
-[dependencies]
-ark-bls12-377 = { version = "0.3" }
-ark-serialize = { version = "0.3", features = [ "derive" ] }
-ark-ff = { version = "0.3", features = [ "std" ] }
-ark-ec = { version = "0.3", features = [ "std" ] }
-ark-std = { version = "0.3", features = [ "std" ] }
-ark-ed-on-bw6-761 = { version = "0.3" }
-ark-crypto-primitives = { version = "0.3" }
+[dependencies.ark-bls12-377]
+#version = "0.3.0"
+path = "arkworks-rs/curves/bls12_377"
+#git = "https://github.com/arkworks-rs/curves.git"
+#rev = "a9cb9bfcb2b910ad70fbf59b3863e5fc00e10640"
+#rev = "d2c998736e4aefdadd8e5cf115fc42012daaf125"
+[dependencies.ark-ed-on-bw6-761]
+#version = "0.3.0"
+path = "arkworks-rs/curves/ed_on_bw6_761"
+#git = "https://github.com/arkworks-rs/curves.git"
+#rev = "a9cb9bfcb2b910ad70fbf59b3863e5fc00e10640"
+#rev = "d2c998736e4aefdadd8e5cf115fc42012daaf125"
 
-# other deps
+[dependencies.ark-serialize]
+#version = "0.3.0"
+path = "arkworks-rs/algebra/serialize"
+#git = "https://github.com/arkworks-rs/algebra.git"
+#rev = "3b589fe211683dfb64ef73cd987fab1ba6676ae5"
+#tag = "v0.3.0"
+features = [ "derive" ]
+[dependencies.ark-ff]
+#version = "0.3.0"
+path = "arkworks-rs/algebra/ff"
+#git = "https://github.com/arkworks-rs/algebra.git"
+#rev = "3b589fe211683dfb64ef73cd987fab1ba6676ae5"
+#tag = "v0.3.0"
+features = [ "std" ]
+[dependencies.ark-ec]
+#version = "0.3.0"
+path = "arkworks-rs/algebra/ec"
+#git = "https://github.com/arkworks-rs/algebra.git"
+#rev = "3b589fe211683dfb64ef73cd987fab1ba6676ae5"
+#tag = "v0.3.0"
+features = [ "std" ]
+
+[dependencies.ark-std ]
+#version = "0.3.0"
+path = "arkworks-rs/std"
+#git = "https://github.com/arkworks-rs/std.git"
+#rev = "2b3568f4da4bf1ab03406eb67e0a1b06ec53b059"
+features = [ "std" ]
+[dependencies.ark-crypto-primitives]
+#version = "0.3.0"
+path = "arkworks-rs/crypto-primitives"
+#git = "https://github.com/arkworks-rs/crypto-primitives.git"
+#rev = "5b0d4ba293aa91b65326eb934e4b2322fc06a4f2"
+[dependencies.ark-r1cs-std]
+#version = "0.3.0"
+path = "arkworks-rs/r1cs-std"
+#git = "https://github.com/arkworks-rs/r1cs-std.git"
+#rev = "6e59e02a1b13c60e5f3282a826c144100c2f9a08"
+
+[dependencies]
 rand = "0.8.4"
 byteorder = "1.4.3"
 hex = "0.4.3"
