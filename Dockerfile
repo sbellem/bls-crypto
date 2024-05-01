@@ -17,5 +17,4 @@ COPY src src
 
 COPY arkworks-rs /usr/src/bls-crypto/arkworks-rs
 
-#RUN --mount=type=cache,target=/usr/local/cargo/registry cargo build --tests --examples
-RUN --mount=type=cache,target=/usr/local/cargo/registry cargo build
+RUN --mount=type=cache,target=/usr/local/cargo/registry cargo build --tests --examples
