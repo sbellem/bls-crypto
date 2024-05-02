@@ -101,6 +101,7 @@ mod test {
     use crate::hashers::Hasher;
     use rand::{Rng, SeedableRng};
     use rand_xorshift::XorShiftRng;
+    use ark_crypto_primitives::crh::{bowe_hopwood, pedersen, CRH};
 
     #[test]
     fn test_crh_empty() {
@@ -108,6 +109,44 @@ mod test {
         let hasher = &*COMPOSITE_HASHER;
         let result = hasher.crh(&[], &msg, 96).unwrap();
         assert_eq!(hex::encode(result), "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+    }
+
+    #[test]
+    fn test_simple_bh() {
+        #[derive(Clone)]
+        struct TestWindow {}
+        impl pedersen::Window for TestWindow {
+            const WINDOW_SIZE: usize = 93;
+            const NUM_WINDOWS: usize = 560;
+        }
+
+        type BHCRH = bowe_hopwood::CRH<EdwardsParameters, TestWindow>;
+
+        let rng = &mut CompositeHasher::<BHCRH>::prng();
+        let params = BHCRH::setup(rng).unwrap();
+
+        let msg: Vec<u8> = vec![1, 2, 3];
+
+        let projective = BHCRH::evaluate(&params, &msg).unwrap();
+        let affine = projective.into_affine();
+
+        let mut x_projective = vec![];
+        let mut y_projective = vec![];
+        let mut x_affine = vec![];
+        let mut y_affine = vec![];
+        let _ = projective.x.serialize(&mut x_projective);
+        let _ = projective.y.serialize(&mut y_projective);
+        let _ = affine.x.serialize(&mut x_affine);
+        let _ = affine.y.serialize(&mut y_affine);
+        let x_projective_hex = hex::encode(x_projective.clone());
+        let y_projective_hex = hex::encode(y_projective.clone());
+        let x_affine_hex = hex::encode(x_affine.clone());
+        let y_affine_hex = hex::encode(y_affine.clone());
+        println!("x projective: {:?}", x_projective_hex);
+        println!("y projective: {:?}", y_projective_hex);
+        println!("x affine: {:?}", x_affine_hex);
+        println!("y affine: {:?}", y_affine_hex);
+        assert_eq!(x_affine_hex, "de1c026051d791ef41f5681a3db4d4eba7335944fc9c2a7f1be78370172f8f246a230c1427b51aca66fc9b9e1f465f00")
     }
 
     #[test]
@@ -122,6 +161,7 @@ mod test {
             *i = rng.gen();
         }
         let result = hasher.crh(&[], &msg, 96).unwrap();
+        println!("{:?}", hex::encode(result.clone()));
         assert_eq!(hex::encode(result), "066e4894d9e5074a8aaf37d342703e48f83aa967952b79bf99cb9db98270907c1d92043890256cf7b19a0cb5b8155300")
     }
 

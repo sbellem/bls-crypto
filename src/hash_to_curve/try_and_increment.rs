@@ -12,8 +12,8 @@ use crate::BLSError;
 
 use ark_bls12_377::Parameters;
 use ark_ec::{
-    bls12::Bls12Parameters,
     models::{
+        bls12::Bls12Parameters,
         short_weierstrass_jacobian::{GroupAffine, GroupProjective},
         SWModelParameters,
     },
