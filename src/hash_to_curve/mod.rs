@@ -311,7 +311,16 @@ mod compat_tests {
             let negy = -y;
 
             let y = if (y < negy) ^ greatest { y } else { negy };
-            G1Affine::<P>::new(x, y)
+            // FIXME: G1Affine::<P>::new(x, y)
+            // ec-0.4.2/src/models/short_weierstrass/affine.rs:78:9:
+            // assertion failed: point.is_in_correct_subgroup_assuming_on_curve()
+            //
+            // See CHANGELOG for algebra
+            // -------------------------
+            // --> New serialization format for Short Weierstrass curves
+            //
+            // https://github.com/arkworks-rs/algebra/pull/463/files#diff-98b2d9844934845b9281c3018210f47090556f96f9db1f64968b5e4dfb06b812
+            G1Affine::<P>::new_unchecked(x, y)
         })
     }
 
