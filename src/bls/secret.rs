@@ -4,7 +4,7 @@ use ark_bls12_377::{Fr, G1Projective};
 use ark_ec::Group;
 use ark_ff::{PrimeField, UniformRand};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
-use ark_std::rand::{Rng};
+use ark_std::rand::Rng;
 
 /// A Private Key using a pairing friendly curve's Fr point
 #[derive(Clone, Debug, CanonicalSerialize, CanonicalDeserialize)]
@@ -119,9 +119,7 @@ mod tests {
         let rng = &mut test_rng();
         let direct_hasher = DirectHasher;
         let try_and_increment =
-            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(
-                &direct_hasher,
-            );
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&direct_hasher);
 
         let sk = PrivateKey::generate(rng);
         let sk2 = PrivateKey::generate(rng);

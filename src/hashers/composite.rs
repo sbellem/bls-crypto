@@ -4,10 +4,10 @@
 use crate::{hashers::DirectHasher, BLSError, Hasher};
 
 use ark_crypto_primitives::crh::{bowe_hopwood, pedersen, CRHScheme};
-use ark_serialize::CanonicalSerialize;
-use ark_std::rand::{Rng, SeedableRng};
 use ark_ec::CurveConfig;
 use ark_ed_on_bw6_761::EdwardsConfig;
+use ark_serialize::CanonicalSerialize;
+use ark_std::rand::{Rng, SeedableRng};
 use blake2s_simd::Params;
 use once_cell::sync::Lazy;
 use rand_chacha::ChaChaRng;
@@ -29,7 +29,7 @@ mod window {
 /// Bowe Hopwood Pedersen CRH instantiated over Edwards BW6_761 with `WINDOW_SIZE = 93` and
 /// `NUM_WINDOWS = 560`
 #[allow(clippy::upper_case_acronyms)]
-pub type BHCRH = bowe_hopwood::CRH::<EdwardsConfig, window::Window>;
+pub type BHCRH = bowe_hopwood::CRH<EdwardsConfig, window::Window>;
 
 /// Lazily evaluated composite hasher instantiated over the
 /// Bowe-Hopwood-Pedersen CRH.
@@ -72,7 +72,9 @@ impl<H: CRHScheme> CompositeHasher<H> {
     }
 }
 
-impl<H: CRHScheme<Input = [u8], Output = <EdwardsConfig as CurveConfig>::BaseField>> Hasher for CompositeHasher<H> {
+impl<H: CRHScheme<Input = [u8], Output = <EdwardsConfig as CurveConfig>::BaseField>> Hasher
+    for CompositeHasher<H>
+{
     type Error = BLSError;
 
     // TODO: Should we improve the trait design somehow? Seems like there's a bad abstraction

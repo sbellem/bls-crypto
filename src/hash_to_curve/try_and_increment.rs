@@ -5,19 +5,19 @@ use std::marker::PhantomData;
 
 use super::HashToCurve;
 use crate::hashers::{
-    composite::{CompositeHasher, COMPOSITE_HASHER, BHCRH},
+    composite::{CompositeHasher, BHCRH, COMPOSITE_HASHER},
     DirectHasher, Hasher,
 };
 use crate::BLSError;
 
 use ark_bls12_377::Config;
 use ark_ec::{
-    AffineRepr,
     bls12::Bls12Config,
-    models::short_weierstrass::{SWCurveConfig, Projective},
+    models::short_weierstrass::{Projective, SWCurveConfig},
     short_weierstrass::Affine,
+    AffineRepr,
 };
-use ark_serialize::{Compress, CanonicalSerialize};
+use ark_serialize::{CanonicalSerialize, Compress};
 
 use crate::hash_to_curve::hash_length;
 use once_cell::sync::Lazy;
@@ -140,15 +140,16 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::hashers::{
-        composite::{CompositeHasher, COMPOSITE_HASHER, BHCRH},
-    };
+    use crate::hashers::composite::{CompositeHasher, BHCRH, COMPOSITE_HASHER};
     use ark_ec::bls12::Bls12Config;
     use std::any::type_name_of_val;
 
     #[test]
     fn test_try_and_increment() {
-        let try_and_increment: TryAndIncrement<CompositeHasher<BHCRH>, <Config as Bls12Config>::G1Config> = TryAndIncrement::new(&*COMPOSITE_HASHER);
+        let try_and_increment: TryAndIncrement<
+            CompositeHasher<BHCRH>,
+            <Config as Bls12Config>::G1Config,
+        > = TryAndIncrement::new(&*COMPOSITE_HASHER);
         println!("{:?}", type_name_of_val(&try_and_increment));
         //let msg: Vec<u8> = vec![];
         //let hasher = &*COMPOSITE_HASHER;

@@ -5,19 +5,19 @@ use std::marker::PhantomData;
 
 use super::HashToCurve;
 use crate::hashers::{
-    composite::{CompositeHasher, COMPOSITE_HASHER, BHCRH},
+    composite::{CompositeHasher, BHCRH, COMPOSITE_HASHER},
     Hasher,
 };
 use crate::BLSError;
 
 use ark_bls12_377::Config;
 use ark_ec::{
-    AffineRepr,
     bls12::Bls12Config,
-    models::short_weierstrass::{SWCurveConfig, Projective},
+    models::short_weierstrass::{Projective, SWCurveConfig},
     short_weierstrass::Affine,
+    AffineRepr,
 };
-use ark_serialize::{Compress, CanonicalSerialize};
+use ark_serialize::{CanonicalSerialize, Compress};
 
 use crate::hash_to_curve::hash_length;
 use once_cell::sync::Lazy;

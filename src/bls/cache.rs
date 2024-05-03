@@ -10,7 +10,6 @@ use std::{
     num::NonZeroUsize,
 };
 
-
 /// Allows deserializing and aggregation of public keys while holding a cache to improve
 /// performance. Aggregation assumes that the aggregated public key changes slowly.
 pub struct PublicKeyCache {
@@ -120,14 +119,14 @@ mod tests {
     use ark_std::rand::Rng;
 
     fn rand_pubkey<R: Rng + Sized>(rng: &mut R) -> PublicKey {
-          PublicKey(G2Projective::rand(rng))
-   }
+        PublicKey(G2Projective::rand(rng))
+    }
 
     #[test]
     fn deserializer() {
         let mut cache = PublicKeyCache::new();
 
-        let mut rng = ark_std::test_rng(); 
+        let mut rng = ark_std::test_rng();
         let pubkeys = (0..10).map(|_| rand_pubkey(&mut rng)).collect::<Vec<_>>();
         let serialized = pubkeys
             .iter()

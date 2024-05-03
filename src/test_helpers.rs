@@ -75,8 +75,6 @@ pub fn sign<E: Pairing>(
         .iter()
         .map(|key| message_hash.mul_bigint(key.into_bigint()))
         .collect::<Vec<_>>();
-    let asig = sigs
-        .iter()
-        .fold(E::G1::zero(), |acc, sig| acc + sig);
+    let asig = sigs.iter().fold(E::G1::zero(), |acc, sig| acc + sig);
     (sigs, asig)
 }

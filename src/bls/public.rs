@@ -1,15 +1,10 @@
 use crate::{BLSError, BlsResult, HashToCurve, PrivateKey, Signature, POP_DOMAIN, SIG_DOMAIN};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Projective, G2Affine, G2Projective};
-use ark_ec::{AffineRepr, CurveGroup, Group, pairing::Pairing};
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup, Group};
 use ark_ff::{One, PrimeField};
 use ark_serialize::{
-    CanonicalDeserialize,
-    CanonicalSerialize,
-    Compress,
-    SerializationError,
-    Valid,
-    Validate,
+    CanonicalDeserialize, CanonicalSerialize, Compress, SerializationError, Valid, Validate,
 };
 
 use std::{
@@ -128,12 +123,14 @@ impl CanonicalSerialize for PublicKey {
         self.0.into_affine().serialized_size(compress)
     }
 
-	fn serialize_with_mode<W: Write>(
+    fn serialize_with_mode<W: Write>(
         &self,
         mut writer: W,
         compress: Compress,
     ) -> Result<(), SerializationError> {
-        self.0.into_affine().serialize_with_mode(&mut writer, compress)
+        self.0
+            .into_affine()
+            .serialize_with_mode(&mut writer, compress)
     }
 }
 
@@ -159,6 +156,4 @@ impl CanonicalDeserialize for PublicKey {
             G2Affine::deserialize_with_mode(&mut reader, compress, validate)?.into_group(),
         ))
     }
-
-
 }

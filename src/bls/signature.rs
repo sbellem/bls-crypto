@@ -2,15 +2,10 @@ use super::PublicKey;
 use crate::{BLSError, HashToCurve};
 
 use ark_bls12_377::{Bls12_377, Fq12, G1Affine, G1Projective, G2Affine};
-use ark_ec::{AffineRepr, CurveGroup, pairing::Pairing};
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::One;
 use ark_serialize::{
-    CanonicalDeserialize,
-    CanonicalSerialize,
-    Compress,
-    SerializationError,
-    Valid,
-    Validate,
+    CanonicalDeserialize, CanonicalSerialize, Compress, SerializationError, Valid, Validate,
 };
 
 use std::{
@@ -56,12 +51,14 @@ impl CanonicalSerialize for Signature {
         self.0.into_affine().serialized_size(compress)
     }
 
-	fn serialize_with_mode<W: Write>(
+    fn serialize_with_mode<W: Write>(
         &self,
         mut writer: W,
         compress: Compress,
     ) -> Result<(), SerializationError> {
-        self.0.into_affine().serialize_with_mode(&mut writer, compress)
+        self.0
+            .into_affine()
+            .serialize_with_mode(&mut writer, compress)
     }
 }
 
@@ -144,8 +141,10 @@ impl Signature {
         // `.into()` is needed to prepared the points
         //let mut els_g1: Vec<Pairing::G1Prepared> = Vec::with_capacity(message_hashes.len() + 1);
         //let mut els_g2: Vec<Pairing::G2Prepared> = Vec::with_capacity(message_hashes.len() + 1);
-        let mut els_g1: Vec<<Bls12_377 as Pairing>::G1Prepared> = Vec::with_capacity(message_hashes.len() + 1);
-        let mut els_g2: Vec<<Bls12_377 as Pairing>::G2Prepared> = Vec::with_capacity(message_hashes.len() + 1);
+        let mut els_g1: Vec<<Bls12_377 as Pairing>::G1Prepared> =
+            Vec::with_capacity(message_hashes.len() + 1);
+        let mut els_g2: Vec<<Bls12_377 as Pairing>::G2Prepared> =
+            Vec::with_capacity(message_hashes.len() + 1);
         els_g1.push(self.as_ref().into_affine().into());
         els_g2.push(G2Affine::generator().neg().into());
         message_hashes
@@ -180,7 +179,7 @@ mod tests {
 
     use crate::hash_to_curve::try_and_increment::DIRECT_HASH_TO_G1;
     use crate::hash_to_curve::try_and_increment_cip22::TryAndIncrementCIP22;
-    use ark_bls12_377::{Bls12_377, G1Projective, G2Projective, Config};
+    use ark_bls12_377::{Bls12_377, Config, G1Projective, G2Projective};
     use ark_ec::bls12::Bls12Config;
     use ark_ff::{UniformRand, Zero};
     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
@@ -242,10 +241,8 @@ mod tests {
         let try_and_increment_direct =
             TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&DirectHasher);
         test_batch_verify_with_hasher(&try_and_increment_direct, false, false);
-        let try_and_increment_composite = TryAndIncrement::<
-            _,
-            <Config as Bls12Config>::G1Config,
-        >::new(&*COMPOSITE_HASHER);
+        let try_and_increment_composite =
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&*COMPOSITE_HASHER);
         for &cip22 in &[false, true] {
             test_batch_verify_with_hasher(&try_and_increment_composite, true, cip22);
             let try_and_increment_composite_cip22 = TryAndIncrementCIP22::<

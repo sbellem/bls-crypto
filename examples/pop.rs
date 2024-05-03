@@ -2,7 +2,7 @@ use bls_crypto::{hash_to_curve::try_and_increment::DIRECT_HASH_TO_G1, PrivateKey
 
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
-use clap::{Command, Arg};
+use clap::{Arg, Command};
 
 fn main() {
     let matches = Command::new("BLS Proof of Possession")

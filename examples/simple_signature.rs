@@ -4,8 +4,8 @@ use bls_crypto::{
 
 use ark_serialize::CanonicalSerialize;
 
-use clap::{Command, Arg};
 use ark_std::test_rng;
+use clap::{Arg, Command};
 
 fn main() {
     let matches = Command::new("SimpleAggregatedSignature")

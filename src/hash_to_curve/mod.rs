@@ -45,10 +45,7 @@
 pub mod try_and_increment;
 pub mod try_and_increment_cip22;
 use crate::BLSError;
-use ark_ec::{
-    short_weierstrass::Affine,
-    models::short_weierstrass::SWCurveConfig,
-};
+use ark_ec::{models::short_weierstrass::SWCurveConfig, short_weierstrass::Affine};
 use ark_ff::{Field, Zero};
 use ark_serialize::Flags;
 
@@ -170,8 +167,7 @@ mod test {
     };
     use ark_bls12_377::Config;
     use ark_ec::{
-        bls12::Bls12Config,
-        models::short_weierstrass::SWCurveConfig,
+        bls12::Bls12Config, models::short_weierstrass::SWCurveConfig,
         short_weierstrass::Projective, CurveGroup,
     };
     use ark_serialize::CanonicalSerialize;
@@ -253,10 +249,7 @@ mod test {
     }
 
     #[allow(dead_code)]
-    pub fn test_hash_to_group_cip22<
-        P: SWCurveConfig,
-        H: HashToCurve<Output = Projective<P>>,
-    >(
+    pub fn test_hash_to_group_cip22<P: SWCurveConfig, H: HashToCurve<Output = Projective<P>>>(
         hasher: &H,
         rng: &mut impl Rng,
         expected_hashes: Vec<Vec<u8>>,
@@ -280,13 +273,12 @@ mod compat_tests {
     use crate::hashers::{composite::COMPOSITE_HASHER, Hasher};
     use ark_bls12_377::Config;
     use ark_ec::{
-        AffineRepr,
         bls12::{Bls12Config, G1Affine, G1Projective},
         models::short_weierstrass::SWCurveConfig,
-        CurveConfig, CurveGroup,
+        AffineRepr, CurveConfig, CurveGroup,
     };
     use ark_ff::{Field, PrimeField};
-    use ark_serialize::{CanonicalSerialize, CanonicalDeserialize};
+    use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
     use ark_std::{end_timer, start_timer};
     use byteorder::WriteBytesExt;
     use log::trace;
@@ -419,9 +411,8 @@ mod compat_tests {
         let mut rng = XorShiftRng::from_seed(RNG_SEED);
         let expected_hashes = generate_compat_expected_hashes(1000);
 
-        let hasher = TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(
-            &*COMPOSITE_HASHER,
-        );
+        let hasher =
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&*COMPOSITE_HASHER);
         super::test::test_hash_to_group(&hasher, &mut rng, expected_hashes)
     }
 
@@ -443,9 +434,8 @@ mod compat_tests {
             "66c6dd47e7ef88abb058a39bc9c41d9c15705536866c51b8171d0602b26245627410af9435e41dd28eceb6fa3db4a601",
         ].into_iter().map(|x| hex::decode(&x).unwrap()).collect::<Vec<_>>();
 
-        let hasher = TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(
-            &*COMPOSITE_HASHER,
-        );
+        let hasher =
+            TryAndIncrement::<_, <Config as Bls12Config>::G1Config>::new(&*COMPOSITE_HASHER);
         super::test::test_hash_to_group(&hasher, &mut rng, expected_hashes)
     }
 
@@ -466,9 +456,8 @@ mod compat_tests {
             "74b9a0c52380c01a0011a99b5ab81a32d226a32e91a1bdf98348ddcd65f8ee1455ea25d053a46b1006bc12034e479580",
         ].into_iter().map(|x| hex::decode(&x).unwrap()).collect::<Vec<_>>();
 
-        let hasher = TryAndIncrementCIP22::<_, <Config as Bls12Config>::G1Config>::new(
-            &*COMPOSITE_HASHER,
-        );
+        let hasher =
+            TryAndIncrementCIP22::<_, <Config as Bls12Config>::G1Config>::new(&*COMPOSITE_HASHER);
         super::test::test_hash_to_group_cip22(&hasher, &mut rng, expected_hashes)
     }
 }
@@ -524,9 +513,8 @@ mod non_compat_tests {
             "8de37ce0a7105c14880d9201f2ac1c724e031904f9c88614fa414ad57f00c89e596fadb4f5151c84f4ea04d576931c008fc43faec79d0e300d2192a8e376b25f920f14f467f050e4f2869012fce196e9af5f2041889031e2bbe81c6b3d344480",
             "10341299c41179084a0bfee8b65bac0f48af827daad4f01d3e9925a3b0335736c5d13f44765fecec45941781da5a1000d0bb26a4faa4dc8060b0b2dd0cb6acce7dd10bd081dac7f263b97aec89d6434a55b31a65b3e25f59c40ea92887b03180",
         ].into_iter().map(|x| hex::decode(&x).unwrap()).collect::<Vec<_>>();
-        let hasher_g2 = TryAndIncrement::<_, <Config as Bls12Config>::G2Config>::new(
-            &*COMPOSITE_HASHER,
-        );
+        let hasher_g2 =
+            TryAndIncrement::<_, <Config as Bls12Config>::G2Config>::new(&*COMPOSITE_HASHER);
         super::test::test_hash_to_group(&hasher_g2, &mut rng, expected_hashes)
     }
 }

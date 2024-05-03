@@ -1,8 +1,8 @@
 use ark_serialize::CanonicalSerialize;
 use bls_crypto::{hash_to_curve::try_and_increment::DIRECT_HASH_TO_G1, PrivateKey};
 
-use clap::{Command, Arg};
 use ark_std::test_rng;
+use clap::{Arg, Command};
 use std::{fs::File, io::Write};
 
 fn main() {
