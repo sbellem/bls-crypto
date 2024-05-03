@@ -47,27 +47,27 @@ fn main() {
     println!("Starting!\n\n");
 
     let sig1 = sk1
-        .sign(&message.as_bytes(), &[], try_and_increment)
+        .sign(message.as_bytes(), &[], try_and_increment)
         .unwrap();
     let mut sig1_bytes = vec![];
     sig1.serialize_compressed(&mut sig1_bytes).unwrap();
     println!("sig1: {}", hex::encode(sig1_bytes));
 
     let sig2 = sk2
-        .sign(&message.as_bytes(), &[], try_and_increment)
+        .sign(message.as_bytes(), &[], try_and_increment)
         .unwrap();
     let mut sig2_bytes = vec![];
     sig2.serialize_compressed(&mut sig2_bytes).unwrap();
     println!("sig2: {}", hex::encode(sig2_bytes));
 
     let sig3 = sk3
-        .sign(&message.as_bytes(), &[], try_and_increment)
+        .sign(message.as_bytes(), &[], try_and_increment)
         .unwrap();
     let mut sig3_bytes = vec![];
     sig3.serialize_compressed(&mut sig3_bytes).unwrap();
     println!("sig3: {}", hex::encode(sig3_bytes));
 
-    let apk = PublicKey::aggregate(&[
+    let apk = PublicKey::aggregate([
         sk1.to_public(),
         sk2.to_public(),
         sk3.to_public(),
@@ -76,13 +76,13 @@ fn main() {
     let mut apk_bytes = vec![];
     apk.serialize_compressed(&mut apk_bytes).unwrap();
     println!("apk: {}", hex::encode(apk_bytes));
-    let asig1 = Signature::aggregate(&[sig1, sig3.clone()]);
-    let asig2 = Signature::aggregate(&[sig2, sig3]);
-    let asig = Signature::aggregate(&[asig1, asig2]);
+    let asig1 = Signature::aggregate([sig1, sig3.clone()]);
+    let asig2 = Signature::aggregate([sig2, sig3]);
+    let asig = Signature::aggregate([asig1, asig2]);
     let mut asig_bytes = vec![];
     asig.serialize_compressed(&mut asig_bytes).unwrap();
     println!("asig: {}", hex::encode(asig_bytes));
-    apk.verify(&message.as_bytes(), &[], &asig, try_and_increment)
+    apk.verify(message.as_bytes(), &[], &asig, try_and_increment)
         .unwrap();
     println!("aggregated signature verified successfully");
 }

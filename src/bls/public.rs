@@ -69,7 +69,7 @@ impl PublicKey {
         signature: &Signature,
         hash_to_g1: &H,
     ) -> BlsResult<()> {
-        self.verify_sig(POP_DOMAIN, &message, &[], signature, hash_to_g1)
+        self.verify_sig(POP_DOMAIN, message, &[], signature, hash_to_g1)
     }
 
     fn verify_sig<H: HashToCurve<Output = G1Projective>>(

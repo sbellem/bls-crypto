@@ -229,7 +229,7 @@ mod tests {
         apk3.verify(&message[..], &[], &sigs[0], try_and_increment)
             .unwrap_err();
 
-        let apk4 = PublicKey::aggregate(&[sk1.to_public(), sk2.to_public()]);
+        let apk4 = PublicKey::aggregate([sk1.to_public(), sk2.to_public()]);
         apk4.verify(&message[..], &[], &asig, try_and_increment)
             .unwrap();
         apk4.verify(&message[..], &[], &sigs[0], try_and_increment)
